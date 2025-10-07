@@ -8,9 +8,9 @@ import {
 
 const router = Router();
 
-router.get("/meeting/", getMeetings);
-router.post("/meeting/", createMeeting);
-router.put("/meeting/:id", updateMeeting);
-router.delete("/meeting/:id", deleteMeeting);
+router.get("/", getMeetings);
+router.post("/", createMeeting);
+router.put("/:id", updateMeeting);
+router.delete("/:id", deleteMeeting);
 
 export default router;
