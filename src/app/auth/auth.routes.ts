@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { login, signup, refreshToken } from "./auth.controller";
+import { authentication } from "../middlewares/authentication";
 const router = Router();
 
 /**
@@ -80,7 +81,7 @@ const router = Router();
  *       '409':
  *         description: Conflict - A user with this email already exists.
  */
-router.post("/signup", signup);
+router.post("/signup", authentication, signup);
 
 /**
  * @swagger
@@ -120,7 +121,7 @@ router.post("/signup", signup);
  *       '401':
  *         description: Unauthorized - Invalid email or password.
  */
-router.post("/login", login);
+router.post("/login", authentication, login);
 
 /**
  * @swagger

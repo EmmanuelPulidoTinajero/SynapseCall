@@ -36,15 +36,20 @@
   "dependencies": {
     "@types/swagger-ui-express": "^4.1.8",
     "axios": "^1.12.2",
+    "bcrypt": "^6.0.0",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
     "install": "^0.13.0",
-    "mongoose": "^8.19.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongodb": "^7.0.0",
+    "mongoose": "^8.19.3",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1"
   },
   "devDependencies": {
+    "@types/bcrypt": "^6.0.0",
     "@types/express": "^5.0.3",
+    "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^24.7.0",
     "@types/swagger-jsdoc": "^6.0.4",
     "nodemon": "^3.1.10",

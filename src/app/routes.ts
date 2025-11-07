@@ -9,3 +9,5 @@ router.use(json());
 router.use("/auth", authRoutes);
 router.use("/meetings", meetingsRoutes);
 router.use("/users", usersRoutes);
+
+export default router;
