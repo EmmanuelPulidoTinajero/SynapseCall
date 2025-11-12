@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { login, signup, refreshToken } from "./auth.controller";
+import { login, signup, refreshToken, verifyAccount } from "./auth.controller";
 import { authentication } from "../middlewares/authentication";
 const router = Router();
 
@@ -66,22 +66,22 @@ const router = Router();
  *                 type: string
  *     responses:
  *       '201':
- *         description: User created successfully. Returns the new user and tokens.
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 user:
- *                   $ref: '#/components/schemas/User'
- *                 tokens:
- *                   $ref: '#/components/schemas/AuthTokens'
- *       '400':
- *         description: Bad Request - Invalid or missing fields.
- *       '409':
- *         description: Conflict - A user with this email already exists.
+ *         description: User created successfully. Returns a verification token.
+         content:
+           application/json:
+             schema:
+               type: object
+               properties:
+                 message:
+                   type: string
+                 verificationToken:
+                   type: string
+       '400':
+         description: Bad Request - Invalid or missing fields.
+       '409':
+         description: Conflict - A user with this email already exists.
  */
-router.post("/signup", authentication, signup);
+router.post("/signup", signup);
 
 /**
  * @swagger
@@ -109,19 +109,52 @@ router.post("/signup", authentication, signup);
  *     responses:
  *       '200':
  *         description: Login successful. Returns the user and tokens.
+         content:
+           application/json:
+             schema:
+               type: object
+               properties:
+                 user:
+                   $ref: '#/components/schemas/User'
+                 tokens:
+                   $ref: '#/components/schemas/AuthTokens'
+       '401':
+         description: Unauthorized - Invalid email or password.
+       '403':
+         description: Forbidden - User is not active.
+ */
+router.post("/login", login);
+
+/**
+ * @swagger
+ * /auth/verify-account/{token}:
+ *   get:
+ *     summary: Verify user account
+ *     tags: [Auth]
+ *     description: Verifies a user's account using a verification token sent to their email.
+ *     parameters:
+ *       - in: path
+ *         name: token
+ *         required: true
+ *         description: The verification token received via email.
+ *         schema:
+ *           type: string
+ *     responses:
+ *       '200':
+ *         description: Account activated successfully.
  *         content:
  *           application/json:
  *             schema:
  *               type: object
  *               properties:
- *                 user:
- *                   $ref: '#/components/schemas/User'
- *                 tokens:
- *                   $ref: '#/components/schemas/AuthTokens'
- *       '401':
- *         description: Unauthorized - Invalid email or password.
+ *                 message:
+ *                   type: string
+ *       '404':
+ *         description: Not Found - User not found.
+ *       '500':
+ *         description: Server error or invalid/expired token.
  */
-router.post("/login", authentication, login);
+router.get("/verify-account/:token", verifyAccount);
 
 /**
  * @swagger
