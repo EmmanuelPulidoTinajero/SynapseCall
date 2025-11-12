@@ -68,3 +68,7 @@ export const login = async (req: Request, res: Response) => {
 export const refreshToken = (req: Request, res: Response) => {
     return res.status(501).json({ message: "falta implementar" });
 };
+
+export const verifyAccount = (req: Request, res: Response) => {
+    return res.status(501).json({ message: "falta implementar" });
+}
