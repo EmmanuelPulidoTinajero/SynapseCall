@@ -1,10 +1,6 @@
 import { Router } from "express";
-import {
-    getOrgById,
-    createNewOrg,
-    updateOrgById,
-    deleteOrgById
-} from "./org.controller"
+import { getOrgById, createNewOrg, updateOrgById, deleteOrgById } from "./org.controller"
+import { authentication } from "../middlewares/authentication";
 
 const router = Router();
 
@@ -74,7 +70,7 @@ const router = Router();
  *       '404':
  *         description: Organization not found
  */
-router.get("/:orgId", getOrgById);
+router.get("/:orgId", authentication, getOrgById);
 
 /**
  * @swagger
@@ -103,7 +99,7 @@ router.get("/:orgId", getOrgById);
  *       '401':
  *         description: Unauthorized
  */
-router.post("/create", createNewOrg);
+router.post("/create", authentication, createNewOrg);
 
 /**
  * @swagger
@@ -139,7 +135,7 @@ router.post("/create", createNewOrg);
  *       '404':
  *         description: Organization not found
  */
-router.patch("/:orgId", updateOrgById);
+router.patch("/:orgId", authentication, updateOrgById);
 
 /**
  * @swagger
@@ -165,6 +161,6 @@ router.patch("/:orgId", updateOrgById);
  *       '404':
  *         description: Organization not found
  */
-router.delete("/:orgId", deleteOrgById);
+router.delete("/:orgId", authentication, deleteOrgById);
 
 export default router;

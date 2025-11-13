@@ -15,8 +15,8 @@ const app = express();
 // app.set("view engine", "handlebars");
 // app.set("views", "./src/views")
 // app.use("/static", static_(path.join(__dirname, "..", "public")));
-app.use(router);
 app.use(express.json());
+app.use(router);
 app.get("", (req, res) => {
     console.log("all working...");
 });
