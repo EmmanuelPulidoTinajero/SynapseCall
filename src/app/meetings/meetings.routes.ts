@@ -1,10 +1,6 @@
 import { Router } from "express";
-import {
-    getMeetings,
-    createMeeting,
-    updateMeeting,
-    deleteMeeting
-} from "./meetings.controller";
+import { getMeetings, createMeeting, updateMeeting, deleteMeeting } from "./meetings.controller";
+import { authentication } from "../middlewares/authentication";
 const router = Router();
 
 /**
@@ -87,8 +83,8 @@ const router = Router();
  *       '401':
  *         description: Unauthorized
  */
-router.get("/", getMeetings);
-router.post("/", createMeeting);
+router.get("/", authentication , getMeetings);
+router.post("/", authentication, createMeeting);
 
 /**
  * @swagger
@@ -149,8 +145,8 @@ router.post("/", createMeeting);
  *       '404':
  *         description: Not Found - Meeting with this ID does not exist.
  */
-router.put("/:id", updateMeeting);
-router.delete("/:id", deleteMeeting);
+router.put("/:id", authentication, updateMeeting);
+router.delete("/:id", authentication, deleteMeeting);
 
 export default router;
 

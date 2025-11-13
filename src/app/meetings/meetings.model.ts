@@ -12,7 +12,7 @@ const meetingSchema = new Schema<IMeeting>({
   },
   startTime: { type: Date, required: true },
   endTime: { type: Date },
-  initiator_id: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+  // initiator_id: { type: Schema.Types.ObjectId, ref: 'User', required: true },
 });
 
 const Meeting = model<IMeeting>('Meeting', meetingSchema);

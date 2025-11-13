@@ -1,17 +1,105 @@
 import { Request, Response } from 'express';
+import Meeting from './meetings.model';
+import { IMeeting } from '../interfaces/meeting';
 
-export const getMeetings = (req: Request, res: Response) => {
-    res.status(200).json({ message: "Lista of meetings" });
+export const getMeetings = async (req: Request, res: Response) => {
+    try {
+        const meetings = await Meeting.find({});
+
+        if (meetings.length > 0) {
+            return res.status(200).send({ message: "Meetings found.", meetings });
+        } else {
+            return res.status(200).send({ message: "No meetings created yet." });
+        }
+
+    } catch (error) {
+        return res.status(500).send({ message: "Server error" });
+    }
 };
 
-export const createMeeting = (req: Request, res: Response) => {
-    res.status(201).json({ message: "Meeting created" });
+export const createMeeting = async (req: Request, res: Response) => {
+    try {
+        const newMeeting = req.body;
+
+        if (!newMeeting || !newMeeting.title || !newMeeting.description || !newMeeting.status || !newMeeting.startTime) {
+            return res.status(400).send({ message: "Missing meeting information." });
+        };
+
+        const start = new Date(newMeeting.startTime);
+        if (isNaN(start.getTime())) {
+            return res.status(400).send({ message: 'Invalid startTime format. Use ISO date string.' });
+        }
+        const end = newMeeting.endTime ? new Date(newMeeting.endTime) : undefined;
+        if (newMeeting.endTime && isNaN(end!.getTime())) {
+            return res.status(400).send({ message: 'Invalid endTime format. Use ISO date string.' });
+        }
+
+        const meeting: IMeeting = {
+            id: newMeeting.id,
+            title: newMeeting.title,
+            description: newMeeting.description,
+            status: newMeeting.status,
+            startTime: start,
+            endTime: end as any
+        }
+
+        const created = await Meeting.create(meeting);
+
+        return res.status(201).json({ message: "Meeting created", meeting: created });
+    } catch (error) {
+        return res.status(500).send({ message: "Server error." });
+    }
+
 };
 
-export const updateMeeting = (req: Request, res: Response) => {
-    res.status(200).json({ message: "Meeting updated" });
+export const updateMeeting = async (req: Request, res: Response) => {
+    try {
+        const meetingId = req.params.id || (req.query.id as string | undefined) || undefined;
+        const updateInfo = req.body;
+
+        if (!updateInfo || !updateInfo.title || !updateInfo.description || !updateInfo.status || !updateInfo.startTime || !updateInfo.endTime) {
+            return res.status(400).send({ message: "Missing meeting information." });
+        };
+
+        const updatedMeeting: IMeeting = {
+            id: updateInfo.id,
+            title: updateInfo.title,
+            description: updateInfo.description,
+            status: updateInfo.status,
+            startTime: updateInfo.startTime,
+            endTime: updateInfo.endTime
+        };
+
+        const updated = await Meeting.findByIdAndUpdate(meetingId, updatedMeeting);
+
+        return res.status(200).send({ message: "Meeting updated", meeting: updated });
+    } catch (error) {
+       return res.status(500).send({ message: "Server error." });
+    }
 }
 
-export const deleteMeeting = (req: Request, res: Response) => {
-    res.status(200).json({ message: "Meeting deleted" });
+export const deleteMeeting = async (req: Request, res: Response) => {
+    try {
+        const meetingId = req.params.id || (req.query.id as string | undefined) || undefined;
+
+        if (!meetingId) {
+            return res.status(400).send({ message: "Missing meeting id." });
+        }
+
+        const meeting = await Meeting.findById({ _id: meetingId });
+
+        if (!meeting) {
+            return res.status(404).send({ message: "Meeting not found." });
+        }
+
+        const deletionResult = await Meeting.deleteOne({ _id: meetingId });
+
+        if (deletionResult.deletedCount && deletionResult.deletedCount > 0) {
+            return res.status(200).send({ message: "Meeting deleted." });
+        } else {
+            return res.status(500).send({ message: "Deletion failed." });
+        }
+    } catch (error) {
+        return res.status(500).send({ message: "Server error." });
+    }
 }
