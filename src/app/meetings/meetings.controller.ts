@@ -103,3 +103,7 @@ export const deleteMeeting = async (req: Request, res: Response) => {
         return res.status(500).send({ message: "Server error." });
     }
 }
+
+export const uploadFile = (req: Request, res: Response) => {
+    res.status(200).send({ message: "File uploaded "});
+};

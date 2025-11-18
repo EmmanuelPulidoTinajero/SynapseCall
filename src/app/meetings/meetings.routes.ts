@@ -1,6 +1,7 @@
 import { Router } from "express";
-import { getMeetings, createMeeting, updateMeeting, deleteMeeting } from "./meetings.controller";
+import { getMeetings, createMeeting, updateMeeting, deleteMeeting, uploadFile } from "./meetings.controller";
 import { authentication } from "../middlewares/authentication";
+import upload from "../middlewares/upload";
 const router = Router();
 
 /**
@@ -147,6 +148,10 @@ router.post("/", authentication, createMeeting);
  */
 router.put("/:id", authentication, updateMeeting);
 router.delete("/:id", authentication, deleteMeeting);
+
+
+// File upload endpoints
+router.post("/:id/uploadFiles", upload.single("file"), uploadFile);
 
 export default router;
 
