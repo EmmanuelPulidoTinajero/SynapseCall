@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { getMeetings, createMeeting, updateMeeting, deleteMeeting, uploadFile } from "./meetings.controller";
+import { getMeetings, enterMeeting, createMeeting, updateMeeting, deleteMeeting, uploadFile } from "./meetings.controller";
 import { authentication } from "../middlewares/authentication";
 import upload from "../middlewares/upload";
 const router = Router();
@@ -85,6 +85,7 @@ const router = Router();
  *         description: Unauthorized
  */
 router.get("/", authentication , getMeetings);
+router.get("/:id", enterMeeting),
 router.post("/", authentication, createMeeting);
 
 /**
