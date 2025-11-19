@@ -86,6 +86,7 @@ const router = Router();
  */
 router.get("/", authentication , getMeetings);
 router.get("/:id", enterMeeting),
+router.post("/:id", upload.single("file"), enterMeeting);
 router.post("/", authentication, createMeeting);
 
 /**

@@ -1,6 +1,9 @@
 import { Request, Response } from 'express';
 import Meeting from './meetings.model';
 import { IMeeting } from '../interfaces/meeting';
+import { GetObjectCommand } from '@aws-sdk/client-s3';
+import { s3Storage } from '../middlewares/upload';
+import { getS3DownloadLink , listAllS3Keys} from '../utils/s3.utils';
 
 export const getMeetings = async (req: Request, res: Response) => {
     try {
@@ -20,7 +23,12 @@ export const getMeetings = async (req: Request, res: Response) => {
 export const enterMeeting = async (req: Request, res: Response) => {
     try {
         const meetingId = req.params.id;
-        res.render("meeting", { meetingId: meetingId });
+        const s3Bucket = s3Storage;
+        const keys = await listAllS3Keys(meetingId);
+        const links = await getS3DownloadLink(keys);
+
+        // Pass structured links as JSON so the template can render filenames and URLs
+        res.render("meeting", { meetingId: meetingId, s3Bucket: s3Bucket, downloadLinksJson: JSON.stringify(links) });
     } catch (error) {
         return res.status(500).send({ message: "Server error" });
     }
@@ -114,5 +122,13 @@ export const deleteMeeting = async (req: Request, res: Response) => {
 }
 
 export const uploadFile = (req: Request, res: Response) => {
-    res.status(200).send({ message: "File uploaded "});
+    try {
+        const meetingId = req.params.id;
+        console.log('Uploaded file info:', (req as any).file);
+
+        return res.redirect(`/meetings/${meetingId}`);
+    } catch (error) {
+        console.error('uploadFile error:', error);
+        return res.status(500).send({ message: 'Upload failed' });
+    }
 };

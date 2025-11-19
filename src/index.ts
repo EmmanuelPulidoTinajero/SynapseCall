@@ -6,7 +6,7 @@ import swaggerJsDoc from "swagger-jsdoc";
 import swaggerConfig from "../swagger.config"
 import { setup, serve } from "swagger-ui-express";
 import router from "./app/routes";
-import cookieParser from "cookie-parser"; 
+import cookieParser from "cookie-parser";
 import { dbConnect } from "./database";
 import { engine } from "express-handlebars";
 import { Server } from "http";
@@ -22,7 +22,7 @@ app.set("view engine", "handlebars");
 app.set("views", "./src/views")
 app.use("/static", static_(path.join(__dirname, "..", "public")));
 app.use(express.json());
-app.use(cookieParser(process.env.COOKIE_SECRET)); 
+app.use(cookieParser(process.env.COOKIE_SECRET));
 app.use(router);
 app.get("", (req, res) => {
     res.redirect(`/meetings/${uuidV4()}`);
