@@ -17,6 +17,15 @@ export const getMeetings = async (req: Request, res: Response) => {
     }
 };
 
+export const enterMeeting = async (req: Request, res: Response) => {
+    try {
+        const meetingId = req.params.id;
+        res.render("meeting", { meetingId: meetingId });
+    } catch (error) {
+        return res.status(500).send({ message: "Server error" });
+    }
+};
+
 export const createMeeting = async (req: Request, res: Response) => {
     try {
         const newMeeting = req.body;
