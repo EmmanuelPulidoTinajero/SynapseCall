@@ -1,15 +1,32 @@
 const socket = io("/");
 const videoGrid = document.getElementById("video-grid");
-const myPeer = new Peer();
+let myPeer;
 const myVideo = document.createElement("video");
 myVideo.muted = true;
 const peers = {};
+
+const peerConfig = {
+    host: window.location.hostname,
+    port: window.location.port,
+    path: '/peerjs',
+    config: {
+        iceServers: typeof ICE_SERVERS !== 'undefined' && Array.isArray(ICE_SERVERS) && ICE_SERVERS.length > 0
+            ? ICE_SERVERS
+            : [{ urls: 'stun:stun.l.google.com:19302' }]
+    }
+};
 
 navigator.mediaDevices.getUserMedia({
   video: true,
   audio: true
 }).then(stream => {
+  myPeer = new Peer(undefined, peerConfig);
+
   addVideoStream(myVideo, stream);
+
+  myPeer.on("error", (err) => {
+    console.error("PeerJS General Error:", err);
+  });
 
   myPeer.on("call", call => {
     call.answer(stream);
@@ -17,11 +34,19 @@ navigator.mediaDevices.getUserMedia({
     call.on("stream", userVideoStream => {
       addVideoStream(video, userVideoStream);
     });
+    call.on("error", (err) => {
+      console.error("PeerJS Call Error (Receiver):", err);
+    });
   })
 
   socket.on("user-connected", userId => {
     connectToNewUser(userId, stream)
   })
+
+  myPeer.on("open", id => {
+    socket.emit("join-meeting", MEETING_ID, id);
+  });
+
 }).catch(error => {
   console.error("Failed to get local stream:", error);
   alert("Error: Please check your camera/microphone permissions and ensure you are using HTTPS.");
@@ -33,10 +58,6 @@ socket.on("user-disconnected", userId => {
   }
 })
 
-myPeer.on("open", id => {
-  socket.emit("join-meeting", MEETING_ID, id);
-});
-
 function connectToNewUser (userId, stream) {
   const call = myPeer.call(userId, stream);
   const video = document.createElement("video");
@@ -45,6 +66,9 @@ function connectToNewUser (userId, stream) {
   });
   call.on("close", () => {
     video.remove();
+  });
+  call.on("error", (err) => {
+      console.error("PeerJS Call Error (Caller):", err);
   });
 
   peers[userId] = call;

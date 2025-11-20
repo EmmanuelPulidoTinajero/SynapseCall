@@ -12,6 +12,7 @@ import { engine } from "express-handlebars";
 import { Server } from "http";
 import { Server as SocketServer} from "socket.io";
 import { v4 as uuidV4 } from "uuid";
+import { ExpressPeerServer } from "peer";
 
 const port = process.env.PORT || 3000;
 
@@ -37,14 +38,19 @@ dbConnect().then(()=> {
         console.log(`Listening on port ${port}`);
     })
 
-    const io = new SocketServer(server, {
+    const peerServer = ExpressPeerServer(server, {
+        path: '/'
+    });
+    app.use('/peerjs', peerServer);
+
+    (global as any).io = new SocketServer(server, {
     cors: {
         origin: "*"
     }
     });
 
-    io.on("connection", socket => {
-        socket.on("join-meeting", (meetingId, userId) => {
+    (global as any).io.on("connection", (socket: any) => {
+        socket.on("join-meeting", (meetingId: string, userId: string) => {
             socket.join(meetingId);
             socket.broadcast.to(meetingId).emit("user-connected", userId);
             console.log(meetingId, userId);
