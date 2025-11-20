@@ -12,10 +12,7 @@
     </div>
   </form>
 </div>
-<div id="file-grid">
-</div>
-<div id="file-grid">
-</div>
+<div id="file-grid"></div>
 
 <script>
   const MEETING_ID = "{{meetingId}}";
@@ -31,48 +28,48 @@
       const parts = key.split('---');
       const filename = parts.length > 0 ? parts[parts.length - 1] : `File ${i + 1}`;
 
-      const a = document.createElement('a');
-      a.href = url || "#"";
+        const a = document.createElement('a');
+        a.href = url || "#";
       a.target = "_blank";
       a.rel = 'noopener noreferrer';
       a.textContent = filename;
 
       const btn = document.createElement("button");
       btn.textContent = "Download";
-      btn.type = "button";
-      btn.addEventListener("click", () => {
-        if (url) window.open(url, "_blank");
+      btn.type = 'button';
+      btn.addEventListener('click', () => {
+        if (url) window.open(url, '_blank');
       });
 
-      const div = document.createElement("div");
+      const div = document.createElement('div');
       div.appendChild(a);
       div.appendChild(document.createTextNode(' '));
       div.appendChild(btn);
       filesGrid.appendChild(div);
     });
   } else {
-    filesGrid.innerText = "No files uploaded yet."";
+    filesGrid.innerText = 'No files uploaded yet.';
   }
 
-  function renderFileLink(fileData) {
+function renderFileLink(fileData) {
   const filesGrid = document.getElementById("file-grid");
 
   const url = fileData.url;
   const key = fileData.key || '';
-  const parts = key.split("---");
-  const filename = parts.length > 0 ? parts[parts.length - 1] : "Uploaded File";
+  const parts = key.split('---');
+  const filename = parts.length > 0 ? parts[parts.length - 1] : 'Uploaded File';
 
   const a = document.createElement('a');
-  a.href = url || "#"";
-  a.target = "_blank";
+  a.href = url || '#';
+  a.target = '_blank';
   a.rel = 'noopener noreferrer';
   a.textContent = filename;
 
-  const btn = document.createElement("button");
-  btn.textContent = "Download";
-  btn.type = "button";
-  btn.addEventListener("click", () => {
-    if (url) window.open(url, "_blank");
+  const btn = document.createElement('button');
+  btn.textContent = 'Download';
+  btn.type = 'button';
+  btn.addEventListener('click', () => {
+    if (url) window.open(url, '_blank');
   });
 
   const div = document.createElement('div');

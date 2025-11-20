@@ -170,7 +170,7 @@ export const uploadFile = (req: Request, res: Response) => {
         };
 
         if (io) {
-            io.to(meetingId).broadcast("file-uploaded", fileData);
+            io.to(meetingId).emit("file-uploaded", fileData);
         }
 
         return res.status(200).json({ message: 'Upload successful', file: fileData });
