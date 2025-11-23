@@ -5,7 +5,7 @@ const myVideo = document.createElement("video");
 myVideo.muted = true;
 const peers = {};
 //mensajes
-const userName = "User";//hardcodeado por ahora
+const userName = "User" + Math.floor(Math.random() * 1000);//hardcodeado por ahora
 const chatForm = document.getElementById("chat-form");
 const chatInput = document.getElementById("chat-input");
 const chatMessages = document.getElementById("chat-messages");
