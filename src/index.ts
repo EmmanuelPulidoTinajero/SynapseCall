@@ -60,7 +60,7 @@ dbConnect().then(()=> {
                     userName: data.userName,
                     message: data.message
                 };
-                io.to(meetingId).emit("message", body);
+                (global as any).io.to(meetingId).emit("message", body);
             });
             socket.on("disconnect", () => {
                 socket.broadcast.to(meetingId).emit("user-disconnected", userId);

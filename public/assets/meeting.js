@@ -4,6 +4,11 @@ let myPeer;
 const myVideo = document.createElement("video");
 myVideo.muted = true;
 const peers = {};
+//mensajes
+const userName = "User";//hardcodeado por ahora
+const chatForm = document.getElementById("chat-form");
+const chatInput = document.getElementById("chat-input");
+const chatMessages = document.getElementById("chat-messages");
 
 const peerConfig = {
     host: window.location.hostname,
@@ -46,6 +51,7 @@ navigator.mediaDevices.getUserMedia({
   myPeer.on("open", id => {
     socket.emit("join-meeting", MEETING_ID, id);
   });
+  
 
 }).catch(error => {
   console.error("Failed to get local stream:", error);
@@ -81,3 +87,26 @@ function addVideoStream(video, stream) {
   });
   videoGrid.append(video);
 }
+
+//Chat funcionalidad
+if (chatForm && chatInput && chatMessages) {
+  chatForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const message = chatInput.value;
+    if(!message) return;
+
+    socket.emit("message", {
+      message: message, 
+      userName: userName
+    });
+    chatInput.value = "";
+  });
+}
+
+socket.on("message", (data) => {
+  const { userName, message } = data;
+  const messageElement = document.createElement("div");
+  messageElement.innerHTML = `<strong>${userName}:</strong> ${message}`;
+  chatMessages.appendChild(messageElement);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+});
