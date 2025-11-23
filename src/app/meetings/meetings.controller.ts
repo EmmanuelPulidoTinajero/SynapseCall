@@ -4,6 +4,34 @@ import { IMeeting } from '../interfaces/meeting';
 import { GetObjectCommand } from '@aws-sdk/client-s3';
 import { s3Storage } from '../middlewares/upload';
 import { getS3DownloadLink , listAllS3Keys} from '../utils/s3.utils';
+import axios from 'axios';
+
+const io = (global as any).io;
+const TWILIO_ACCOUNT_SID = process.env.TWILIO_ACCOUNT_SID;
+const TWILIO_AUTH_TOKEN = process.env.TWILIO_AUTH_TOKEN;
+
+const getTwilioIceServers = async () => {
+    if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN) {
+        console.warn("Twilio credentials not set. Falling back to public STUN server.");
+        return [{ urls: 'stun:stun.l.google.com:19302' }];
+    }
+
+    try {
+        const url = `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Tokens.json`;
+
+        const response = await axios.post(url, null, {
+            auth: {
+                username: TWILIO_ACCOUNT_SID,
+                password: TWILIO_AUTH_TOKEN
+            }
+        });
+
+        return response.data.ice_servers;
+    } catch (error) {
+        console.error("Failed to fetch Twilio ICE servers:", error);
+        return [{ urls: 'stun:stun.l.google.com:19302' }];
+    }
+};
 
 export const getMeetings = async (req: Request, res: Response) => {
     try {
@@ -27,8 +55,14 @@ export const enterMeeting = async (req: Request, res: Response) => {
         const keys = await listAllS3Keys(meetingId);
         const links = await getS3DownloadLink(keys);
 
-        // Pass structured links as JSON so the template can render filenames and URLs
-        res.render("meeting", { meetingId: meetingId, s3Bucket: s3Bucket, downloadLinksJson: JSON.stringify(links) });
+        const iceServers = await getTwilioIceServers();
+
+        res.render("meeting", {
+            meetingId: meetingId,
+            s3Bucket: s3Bucket,
+            downloadLinksJson: JSON.stringify(links),
+            iceServersJson: JSON.stringify(iceServers)
+        });
     } catch (error) {
         return res.status(500).send({ message: "Server error" });
     }
@@ -124,9 +158,22 @@ export const deleteMeeting = async (req: Request, res: Response) => {
 export const uploadFile = (req: Request, res: Response) => {
     try {
         const meetingId = req.params.id;
-        console.log('Uploaded file info:', (req as any).file);
+        const file = (req as any).file;
 
-        return res.redirect(`/meetings/${meetingId}`);
+        if (!file) {
+            return res.status(400).send({ message: 'No file uploaded.' });
+        }
+
+        const fileData = {
+            key: file.key,
+            url: file.location
+        };
+
+        if (io) {
+            io.to(meetingId).emit("file-uploaded", fileData);
+        }
+
+        return res.status(200).json({ message: 'Upload successful', file: fileData });
     } catch (error) {
         console.error('uploadFile error:', error);
         return res.status(500).send({ message: 'Upload failed' });

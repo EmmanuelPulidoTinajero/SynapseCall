@@ -3,17 +3,16 @@
 </div>
 <div id="space"></div>
 <div>
-  <form action="/meetings/{{meetingId}}/uploadFiles" method="post" enctype="multipart/form-data">
+  <form id="file-upload-form" action="/meetings/{{meetingId}}/uploadFiles" method="post" enctype="multipart/form-data">
     <div>
-      <input type="file" name="file">
+      <input type="file" name="file" id="file-input">
     </div>
     <div>
-      <button type="submit">Upload</button>
+      <button type="submit" id="upload-button">Upload</button>
     </div>
   </form>
 </div>
-<div id="file-grid">
-</div>
+<div id="file-grid"></div>
 
 <div id="chat-container" style="margin-top: 16px;">
   <h3>Chat de la reunión</h3>
@@ -28,36 +27,116 @@
 
 <script>
   const MEETING_ID = "{{meetingId}}";
-    const keys = {{{downloadLinksJson}}};
-    const filesGrid = document.getElementById("file-grid");
+  const keys = {{{downloadLinksJson}}};
+  const ICE_SERVERS = {{{iceServersJson}}};
 
-    if (Array.isArray(keys) && keys.length > 0) {
-      keys.forEach((item, i) => {
-        const url = item.url;
-        const key = item.key || '';
-        const parts = key.split('---');
-        const filename = parts.length > 0 ? parts[parts.length - 1] : `File ${i + 1}`;
+  const filesGrid = document.getElementById("file-grid");
+
+  if (Array.isArray(keys) && keys.length > 0) {
+    keys.forEach((item, i) => {
+      const url = item.url;
+      const key = item.key || '';
+      const parts = key.split('---');
+      const filename = parts.length > 0 ? parts[parts.length - 1] : `File ${i + 1}`;
 
         const a = document.createElement('a');
-        a.href = url || '#';
-        a.target = '_blank';
-        a.rel = 'noopener noreferrer';
-        a.textContent = filename;
+        a.href = url || "#";
+      a.target = "_blank";
+      a.rel = 'noopener noreferrer';
+      a.textContent = filename;
 
-        const btn = document.createElement('button');
-        btn.textContent = 'Download';
-        btn.type = 'button';
-        btn.addEventListener('click', () => {
-          if (url) window.open(url, '_blank');
-        });
-
-        const div = document.createElement('div');
-        div.appendChild(a);
-        div.appendChild(document.createTextNode(' '));
-        div.appendChild(btn);
-        filesGrid.appendChild(div);
+      const btn = document.createElement("button");
+      btn.textContent = "Download";
+      btn.type = 'button';
+      btn.addEventListener('click', () => {
+        if (url) window.open(url, '_blank');
       });
-    } else {
-      filesGrid.innerText = 'No files uploaded yet.';
-    }
+
+      const div = document.createElement('div');
+      div.appendChild(a);
+      div.appendChild(document.createTextNode(' '));
+      div.appendChild(btn);
+      filesGrid.appendChild(div);
+    });
+  } else {
+    filesGrid.innerText = 'No files uploaded yet.';
+  }
+
+function renderFileLink(fileData) {
+  const filesGrid = document.getElementById("file-grid");
+
+  const url = fileData.url;
+  const key = fileData.key || '';
+  const parts = key.split('---');
+  const filename = parts.length > 0 ? parts[parts.length - 1] : 'Uploaded File';
+
+  const a = document.createElement('a');
+  a.href = url || '#';
+  a.target = '_blank';
+  a.rel = 'noopener noreferrer';
+  a.textContent = filename;
+
+  const btn = document.createElement('button');
+  btn.textContent = 'Download';
+  btn.type = 'button';
+  btn.addEventListener('click', () => {
+    if (url) window.open(url, '_blank');
+  });
+
+  const div = document.createElement('div');
+  div.appendChild(a);
+  div.appendChild(document.createTextNode(' '));
+  div.appendChild(btn);
+
+  if (filesGrid.innerText === 'No files uploaded yet.') {
+      filesGrid.innerText = '';
+  }
+
+  filesGrid.appendChild(div);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('file-upload-form');
+    const fileInput = document.getElementById('file-input');
+    const uploadButton = document.getElementById('upload-button');
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        if (fileInput.files.length === 0) {
+            alert('Please select a file to upload.');
+            return;
+        }
+
+        const formData = new FormData(form);
+        uploadButton.disabled = true;
+        uploadButton.textContent = 'Uploading...';
+
+        try {
+            const response = await fetch(form.action, {
+                method: 'POST',
+                body: formData,
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                renderFileLink(data.file);
+            } else {
+                alert('Upload failed. Status: ' + response.status);
+            }
+        } catch (error) {
+            console.error('AJAX Upload Error:', error);
+            alert('An error occurred during upload.');
+        } finally {
+            uploadButton.disabled = false;
+            uploadButton.textContent = 'Upload';
+            form.reset();
+        }
+    });
+
+    socket.on('file-uploaded', (fileData) => {
+        renderFileLink(fileData);
+        console.log('New file received via Socket.IO:', fileData.key);
+    });
+});
 </script>
