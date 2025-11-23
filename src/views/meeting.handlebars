@@ -15,6 +15,17 @@
 <div id="file-grid">
 </div>
 
+<div id="chat-container" style="margin-top: 16px;">
+  <h3>Chat de la reunión</h3>
+  <div id="chat-messages"
+       style="height: 200px; overflow-y: auto; border: 1px solid #ccc; padding: 8px; margin-bottom: 8px;">
+  </div>
+  <form id="chat-form">
+    <input id="chat-input" type="text" placeholder="Escribe aquí..." style="width: 80%;" />
+    <button type="submit">Enviar</button>
+  </form>
+</div>
+
 <script>
   const MEETING_ID = "{{meetingId}}";
     const keys = {{{downloadLinksJson}}};

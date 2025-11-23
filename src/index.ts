@@ -48,6 +48,14 @@ dbConnect().then(()=> {
             socket.join(meetingId);
             socket.broadcast.to(meetingId).emit("user-connected", userId);
             console.log(meetingId, userId);
+            //Chat
+            socket.on("message", (data: {message: string, userName:string}) => {
+                const body = {
+                    userName: data.userName,
+                    message: data.message
+                };
+                io.to(meetingId).emit("message", body);
+            });
             socket.on("disconnect", () => {
                 socket.broadcast.to(meetingId).emit("user-disconnected", userId);
             });
