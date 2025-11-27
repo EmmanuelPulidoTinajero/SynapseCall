@@ -61,13 +61,17 @@ export const login = async (req: Request, res: Response) => {
 
         res.cookie('refresh', refreshToken, {
             httpOnly: true,
-            signed: true,
             maxAge: 7 * 24 * 60 * 60 * 1000
+        });
+
+        res.cookie('accessToken', accessToken, {
+            httpOnly: true,
+            maxAge: 15 * 60 * 1000
         });
 
         return res.status(200).json({
             message: "Login successful",
-            accessToken
+            redirectUrl: `/meetings/${require('uuid').v4()}`
         });
 
     } catch (error) {
@@ -76,11 +80,11 @@ export const login = async (req: Request, res: Response) => {
 };
 
 export const refreshToken = async (req: Request, res: Response) => {
-    const cookies = req.signedCookies;
+    const cookies = req.cookies;
     if (!cookies?.refresh) return res.status(401).json({ message: "No refresh token cookie" });
 
     const refreshToken = cookies.refresh;
-    res.clearCookie('refresh', { httpOnly: true, signed: true });
+    res.clearCookie('refresh', { httpOnly: true });
 
     const foundUser = await User.findOne({ refresh_tokens: refreshToken }).exec();
 
@@ -116,17 +120,21 @@ export const refreshToken = async (req: Request, res: Response) => {
 
             res.cookie('refresh', newRefreshToken, {
                 httpOnly: true,
-                signed: true,
                 maxAge: 7 * 24 * 60 * 60 * 1000
             });
 
-            res.json({ accessToken: newAccessToken });
+            res.cookie('accessToken', newAccessToken, {
+                httpOnly: true,
+                maxAge: 15 * 60 * 1000
+            });
+
+            res.json({ message: "Token refreshed" });
         }
     );
 };
 
 export const logout = async (req: Request, res: Response) => {
-    const cookies = req.signedCookies;
+    const cookies = req.cookies;
     if (!cookies?.refresh) return res.sendStatus(204);
 
     const refreshToken = cookies.refresh;
@@ -137,7 +145,8 @@ export const logout = async (req: Request, res: Response) => {
         await foundUser.save();
     }
 
-    res.clearCookie('refresh', { httpOnly: true, signed: true });
+    res.clearCookie('refresh', { httpOnly: true });
+    res.clearCookie('accessToken', { httpOnly: true });
     return res.sendStatus(204);
 }
 

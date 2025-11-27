@@ -11,4 +11,16 @@ router.use("/users", usersRoutes);
 router.use("/meetings", meetingsRoutes);
 router.use("/organizations", OrganizationRoutes);
 
+router.get("/", (req, res) => {
+    res.render("home");
+});
+
+router.get("/login", (req, res) => {
+    res.render("login");
+});
+
+router.get("/signup", (req, res) => {
+    res.render("signup");
+});
+
 export default router;

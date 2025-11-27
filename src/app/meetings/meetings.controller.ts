@@ -5,6 +5,9 @@ import { GetObjectCommand } from '@aws-sdk/client-s3';
 import { s3Storage } from '../middlewares/upload';
 import { getS3DownloadLink , listAllS3Keys} from '../utils/s3.utils';
 import axios from 'axios';
+import BreakoutRoom from './breakout-room.model';
+import BreakoutRoomParticipant from './breakout-room-participant.model';
+import MeetingParticipant from './meeting-participant.model';
 
 const io = (global as any).io;
 const TWILIO_ACCOUNT_SID = process.env.TWILIO_ACCOUNT_SID;
@@ -51,17 +54,23 @@ export const getMeetings = async (req: Request, res: Response) => {
 export const enterMeeting = async (req: Request, res: Response) => {
     try {
         const meetingId = req.params.id;
+        const userId = (req as any).user.id;
         const s3Bucket = s3Storage;
         const keys = await listAllS3Keys(meetingId);
         const links = await getS3DownloadLink(keys);
 
         const iceServers = await getTwilioIceServers();
 
+        const participant = await MeetingParticipant.findOne({ meetingId, userId });
+        const userRole = participant ? participant.role : 'guest';
+
+
         res.render("meeting", {
             meetingId: meetingId,
             s3Bucket: s3Bucket,
             downloadLinksJson: JSON.stringify(links),
-            iceServersJson: JSON.stringify(iceServers)
+            iceServersJson: JSON.stringify(iceServers),
+            isHost: userRole === 'host'
         });
     } catch (error) {
         return res.status(500).send({ message: "Server error" });
@@ -95,6 +104,12 @@ export const createMeeting = async (req: Request, res: Response) => {
         }
 
         const created = await Meeting.create(meeting);
+
+        await MeetingParticipant.create({
+            meetingId: created.id,
+            userId: (req as any).user.id,
+            role: 'host'
+        });
 
         return res.status(201).json({ message: "Meeting created", meeting: created });
     } catch (error) {
@@ -177,5 +192,56 @@ export const uploadFile = (req: Request, res: Response) => {
     } catch (error) {
         console.error('uploadFile error:', error);
         return res.status(500).send({ message: 'Upload failed' });
+    }
+};
+
+export const createBreakoutRoom = async (req: Request, res: Response) => {
+    try {
+        const meetingId = req.params.id;
+        const userId = (req as any).user.id;
+        const { title } = req.body;
+
+        const participant = await MeetingParticipant.findOne({ meetingId, userId });
+        if (!participant || participant.role !== 'host') {
+            return res.status(403).json({ message: 'Only hosts can create breakout rooms' });
+        }
+
+        const breakoutRoom = await BreakoutRoom.create({
+            meetingId,
+            title
+        });
+
+        io.to(meetingId).emit('breakout-room-created', breakoutRoom);
+
+        return res.status(201).json(breakoutRoom);
+    } catch (error) {
+        return res.status(500).json({ message: 'Server error' });
+    }
+};
+
+export const addBreakoutRoomParticipant = async (req: Request, res: Response) => {
+    try {
+        const { id: meetingId, breakoutRoomId } = req.params;
+        const hostId = (req as any).user.id;
+        const { userId } = req.body;
+
+        const hostParticipant = await MeetingParticipant.findOne({ meetingId, userId: hostId });
+        if (!hostParticipant || hostParticipant.role !== 'host') {
+            return res.status(403).json({ message: 'Only hosts can add participants to breakout rooms' });
+        }
+
+        const breakoutRoomParticipant = await BreakoutRoomParticipant.create({
+            breakoutRoomId,
+            userId
+        });
+
+        const userSocket = (global as any).userSockets[userId];
+        if (userSocket) {
+            io.to(userSocket).emit('invited-to-breakout-room', { breakoutRoomId, title: (await BreakoutRoom.findById(breakoutRoomId))?.title });
+        }
+
+        return res.status(200).json(breakoutRoomParticipant);
+    } catch (error) {
+        return res.status(500).json({ message: 'Server error' });
     }
 };

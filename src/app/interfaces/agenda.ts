@@ -1,6 +1,8 @@
+import { Schema } from "mongoose";
+
 export interface IAgenda {
-    id: string; //UUID
+    id: string | Schema.Types.ObjectId; //UUID
     currentItemIndex: number; //int
     isAutoAdvanceEnabled: boolean;
-    //meeting_id: string UUID; - Restricted, para implementación concreta
+    meeting_id: string | Schema.Types.ObjectId;
 }

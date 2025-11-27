@@ -1,5 +1,7 @@
+import { Schema } from "mongoose";
+
 export interface IBreakoutRoom {
-    id: string;
-    roomName: string;
-    //meeting_id: string UUID; - Restricted, para implementación concreta
+    id: string | Schema.Types.ObjectId;
+    title: string;
+    meeting_id: string | Schema.Types.ObjectId;
 }

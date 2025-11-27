@@ -11,7 +11,11 @@ const options : SwaggerOptions = {
         },
         servers: [
             { url: 'http://localhost:' + process.env.PORT }
-        ]
+        ],
+        components: {
+            securitySchemes: {
+            }
+        }
     },
     apis: [
         './src/**/*.ts'

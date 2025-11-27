@@ -1,0 +1,6 @@
+projectKey=SynapseCall
+serverUrl=http://localhost:9000
+serverVersion=25.11.0.114957
+dashboardUrl=http://localhost:9000/dashboard?id=SynapseCall
+ceTaskId=b3110d41-08ab-4c1c-a736-c4314cc27cb0
+ceTaskUrl=http://localhost:9000/api/ce/task?id=b3110d41-08ab-4c1c-a736-c4314cc27cb0

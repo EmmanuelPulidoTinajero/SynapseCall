@@ -49,8 +49,6 @@ const router = Router();
  *     summary: Get organization by ID
  *     tags: [Organizations]
  *     description: Retrieves a specific organization by its ID.
- *     security:
- *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: orgId
@@ -79,8 +77,6 @@ router.get("/:orgId", authentication, getOrgById);
  *     summary: Create new organization
  *     tags: [Organizations]
  *     description: Creates a new organization.
- *     security:
- *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -108,8 +104,6 @@ router.post("/create", authentication, createNewOrg);
  *     summary: Update organization by ID
  *     tags: [Organizations]
  *     description: Updates the details of a specific organization by its ID.
- *     security:
- *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: orgId
@@ -144,8 +138,6 @@ router.patch("/:orgId", authentication, updateOrgById);
  *     summary: Delete organization by ID
  *     tags: [Organizations]
  *     description: Deletes a specific organization by its ID.
- *     security:
- *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: orgId

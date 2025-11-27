@@ -1,9 +1,11 @@
+import { Schema } from "mongoose";
+
 export interface IMeetingSettings {
-    id: string;
+    id: string | Schema.Types.ObjectId;
     hasWaitingRoom: boolean;
     isWhitelistEnabled: boolean;
     whitelist: JSON;
     allowParticipantsToAddAgendaItems: boolean;
     accessCode: string;
-    //meeting_id: string UUID; - Restricted, para implementación concreta
+    meeting_id: string | Schema.Types.ObjectId;
 }

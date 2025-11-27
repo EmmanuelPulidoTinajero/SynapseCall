@@ -25,8 +25,38 @@
   </form>
 </div>
 
+{{#if isHost}}
+<div id="breakout-rooms-controls" style="margin-top: 16px;">
+    <h3>Breakout Rooms</h3>
+    <form id="create-breakout-room-form">
+        <input id="breakout-room-title" type="text" placeholder="Breakout room title" required />
+        <button type="submit">Create Breakout Room</button>
+    </form>
+</div>
+{{/if}}
+
+<div id="breakout-rooms-container" style="margin-top: 16px;">
+</div>
+
+<template id="breakout-room-template">
+    <div class="breakout-room" style="border: 1px solid #ccc; padding: 8px; margin-bottom: 8px;">
+        <h4 class="breakout-room-title"></h4>
+        <button class="join-breakout-room-btn">Join</button>
+        <button class.="leave-breakout-room-btn" style="display: none;">Leave</button>
+        <div class="breakout-room-chat-container" style="display: none;">
+            <div class="breakout-room-chat-messages" style="height: 150px; overflow-y: auto; border: 1px solid #eee; padding: 8px; margin-bottom: 8px;">
+            </div>
+            <form class="breakout-room-chat-form">
+                <input type="text" placeholder="Escribe aquí..." style="width: 70%;" />
+                <button type="submit">Enviar</button>
+            </form>
+        </div>
+    </div>
+</template>
+
 <script>
   const MEETING_ID = "{{meetingId}}";
+  const IS_HOST = {{isHost}};
   const keys = {{{downloadLinksJson}}};
   const ICE_SERVERS = {{{iceServersJson}}};
 

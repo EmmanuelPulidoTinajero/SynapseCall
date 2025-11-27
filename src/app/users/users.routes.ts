@@ -4,7 +4,8 @@ import {
     updatePersonalUser,
     getUserById,
     deleteUserById
-} from "./users.controller"
+} from "./users.controller";
+import { authentication } from "../middlewares/authentication";
 
 const router = Router();
 
@@ -49,8 +50,6 @@ const router = Router();
  *     summary: Get personal user profile
  *     tags: [Users]
  *     description: Retrieves the authenticated user's profile information.
- *     security:
- *       - bearerAuth: []
  *     responses:
  *       '200':
  *         description: Personal user profile retrieved successfully.
@@ -63,7 +62,7 @@ const router = Router();
  *       '404':
  *         description: User not found
  */
-router.get("/me", getPersonalUser);
+router.get("/me", authentication, getPersonalUser);
 
 /**
  * @swagger
@@ -72,8 +71,6 @@ router.get("/me", getPersonalUser);
  *     summary: Update personal user profile
  *     tags: [Users]
  *     description: Updates the authenticated user's profile information.
- *     security:
- *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -94,7 +91,7 @@ router.get("/me", getPersonalUser);
  *       '404':
  *         description: User not found
  */
-router.patch("/me", updatePersonalUser);
+router.patch("/me", authentication, updatePersonalUser);
 
 /**
  * @swagger
@@ -103,8 +100,6 @@ router.patch("/me", updatePersonalUser);
  *     summary: Get user by ID
  *     tags: [Users]
  *     description: Retrieves a specific user by their ID.
- *     security:
- *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: userId
@@ -124,7 +119,7 @@ router.patch("/me", updatePersonalUser);
  *       '404':
  *         description: User not found
  */
-router.get("/:userId", getUserById);
+router.get("/:userId", authentication, getUserById);
 
 /**
  * @swagger
@@ -133,8 +128,6 @@ router.get("/:userId", getUserById);
  *     summary: Delete user by ID
  *     tags: [Users]
  *     description: Deletes a specific user by their ID.
- *     security:
- *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: userId
@@ -152,6 +145,6 @@ router.get("/:userId", getUserById);
  *       '404':
  *         description: User not found
  */
-router.delete("/:userId", deleteUserById);
+router.delete("/:userId", authentication, deleteUserById);
 
 export default router;
