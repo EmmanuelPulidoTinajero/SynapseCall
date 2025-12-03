@@ -228,3 +228,14 @@ export const resetPassword = async (req: Request, res: Response) => {
         return res.status(500).send("<h1>Error al actualizar contraseña.</h1>");
     }
 }
+export const renderLogin = (req: Request, res: Response) => {
+    res.render('login');
+};
+
+export const renderSignup = (req: Request, res: Response) => {
+    res.render('signup');
+};
+
+export const renderForgotPassword = (req: Request, res: Response) => {
+    res.render('forgot-password');
+};
