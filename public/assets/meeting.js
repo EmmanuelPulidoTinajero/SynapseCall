@@ -65,6 +65,10 @@ socket.on("user-disconnected", userId => {
 })
 
 function connectToNewUser (userId, stream) {
+  if (typeof myPeer !== 'undefined' && myPeer.id) {
+    console.log("Reconectado al servidor, uniéndose a la sala:", MEETING_ID);
+    socket.emit("join-meeting", MEETING_ID, myPeer.id);
+  }
   const call = myPeer.call(userId, stream);
   const video = document.createElement("video");
   call.on("stream", userVideoStream => {

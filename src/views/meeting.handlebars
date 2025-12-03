@@ -12,8 +12,6 @@
     </div>
   </form>
 </div>
-<div id="file-grid"></div>
-
 <div id="chat-container" style="margin-top: 16px;">
   <h3>Chat de la reunión</h3>
   <div id="chat-messages"
@@ -30,72 +28,27 @@
   const keys = {{{downloadLinksJson}}};
   const ICE_SERVERS = {{{iceServersJson}}};
 
-  const filesGrid = document.getElementById("file-grid");
+  const chatMessagesContainer = document.getElementById("chat-messages");
 
-  if (Array.isArray(keys) && keys.length > 0) {
-    keys.forEach((item, i) => {
-      const url = item.url;
-      const key = item.key || '';
-      const parts = key.split('---');
-      const filename = parts.length > 0 ? parts[parts.length - 1] : `File ${i + 1}`;
+  function addFileToChat(fileData) {
+      const url = fileData.url;
+      const key = fileData.key || '';
+      const originalName = fileData.originalName || key.split('---').pop() || 'Archivo';
 
-        const a = document.createElement('a');
-        a.href = url || "#";
-      a.target = "_blank";
-      a.rel = 'noopener noreferrer';
-      a.textContent = filename;
-
-      const btn = document.createElement("button");
-      btn.textContent = "Download";
-      btn.type = 'button';
-      btn.addEventListener('click', () => {
-        if (url) window.open(url, '_blank');
-      });
-
-      const div = document.createElement('div');
-      div.appendChild(a);
-      div.appendChild(document.createTextNode(' '));
-      div.appendChild(btn);
-      filesGrid.appendChild(div);
-    });
-  } else {
-    filesGrid.innerText = 'No files uploaded yet.';
+      const messageElement = document.createElement("div");
+      messageElement.style.margin = "5px 0";
+      messageElement.innerHTML = `
+        <strong>Sistema:</strong> Ha compartido un archivo: <br/>
+        <a href="${url}" target="_blank" rel="noopener noreferrer" style="color: blue; text-decoration: underline;">
+            📥 Descargar ${originalName}
+        </a>
+      `;
+      
+      chatMessagesContainer.appendChild(messageElement);
+      chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
   }
 
-function renderFileLink(fileData) {
-  const filesGrid = document.getElementById("file-grid");
-
-  const url = fileData.url;
-  const key = fileData.key || '';
-  const parts = key.split('---');
-  const filename = parts.length > 0 ? parts[parts.length - 1] : 'Uploaded File';
-
-  const a = document.createElement('a');
-  a.href = url || '#';
-  a.target = '_blank';
-  a.rel = 'noopener noreferrer';
-  a.textContent = filename;
-
-  const btn = document.createElement('button');
-  btn.textContent = 'Download';
-  btn.type = 'button';
-  btn.addEventListener('click', () => {
-    if (url) window.open(url, '_blank');
-  });
-
-  const div = document.createElement('div');
-  div.appendChild(a);
-  div.appendChild(document.createTextNode(' '));
-  div.appendChild(btn);
-
-  if (filesGrid.innerText === 'No files uploaded yet.') {
-      filesGrid.innerText = '';
-  }
-
-  filesGrid.appendChild(div);
-}
-
-document.addEventListener('DOMContentLoaded', () => {
+  document.addEventListener('DOMContentLoaded', () => {
     const form = document.getElementById('file-upload-form');
     const fileInput = document.getElementById('file-input');
     const uploadButton = document.getElementById('upload-button');
@@ -120,12 +73,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (response.ok) {
                 const data = await response.json();
-                renderFileLink(data.file);
             } else {
                 alert('Upload failed. Status: ' + response.status);
             }
         } catch (error) {
-            console.error('AJAX Upload Error:', error);
             alert('An error occurred during upload.');
         } finally {
             uploadButton.disabled = false;
@@ -134,9 +85,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    socket.on('file-uploaded', (fileData) => {
-        renderFileLink(fileData);
-        console.log('New file received via Socket.IO:', fileData.key);
-    });
+    if (typeof socket !== 'undefined') {
+        socket.on('file-uploaded', (fileData) => {
+            addFileToChat(fileData);
+        });
+    }
 });
 </script>

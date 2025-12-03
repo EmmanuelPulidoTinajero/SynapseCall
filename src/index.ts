@@ -16,7 +16,6 @@ import { ExpressPeerServer } from "peer";
 
 const port = process.env.PORT || 3000;
 
-
 const app = express();
 app.engine("handlebars", engine());
 app.set("view engine", "handlebars");
@@ -32,7 +31,6 @@ app.get("", (req, res) => {
 const swaggerDocs = swaggerJsDoc(swaggerConfig);
 app.use("/swagger", serve, setup(swaggerDocs))
 
-//Para cuando esté lista la conexión a la base de datos
 dbConnect().then(()=> {
     const server: Server = app.listen(port, () => {
         console.log(`Listening on port ${port}`);
@@ -43,25 +41,27 @@ dbConnect().then(()=> {
     });
     app.use('/peerjs', peerServer);
 
-    (global as any).io = new SocketServer(server, {
-    cors: {
-        origin: "*"
-    }
+    const io = new SocketServer(server, {
+        cors: {
+            origin: "*"
+        }
     });
+    
+    (global as any).io = io;
 
-    (global as any).io.on("connection", (socket: any) => {
+    io.on("connection", (socket: any) => {
         socket.on("join-meeting", (meetingId: string, userId: string) => {
             socket.join(meetingId);
             socket.broadcast.to(meetingId).emit("user-connected", userId);
-            console.log(meetingId, userId);
-            //Chat
+            
             socket.on("message", (data: {message: string, userName:string}) => {
                 const body = {
                     userName: data.userName,
                     message: data.message
                 };
-                (global as any).io.to(meetingId).emit("message", body);
+                io.to(meetingId).emit("message", body);
             });
+            
             socket.on("disconnect", () => {
                 socket.broadcast.to(meetingId).emit("user-disconnected", userId);
             });

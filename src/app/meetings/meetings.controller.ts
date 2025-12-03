@@ -1,18 +1,15 @@
 import { Request, Response } from 'express';
 import Meeting from './meetings.model';
 import { IMeeting } from '../interfaces/meeting';
-import { GetObjectCommand } from '@aws-sdk/client-s3';
 import { s3Storage } from '../middlewares/upload';
 import { getS3DownloadLink , listAllS3Keys} from '../utils/s3.utils';
 import axios from 'axios';
 
-const io = (global as any).io;
 const TWILIO_ACCOUNT_SID = process.env.TWILIO_ACCOUNT_SID;
 const TWILIO_AUTH_TOKEN = process.env.TWILIO_AUTH_TOKEN;
 
 const getTwilioIceServers = async () => {
     if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN) {
-        console.warn("Twilio credentials not set. Falling back to public STUN server.");
         return [{ urls: 'stun:stun.l.google.com:19302' }];
     }
 
@@ -28,7 +25,6 @@ const getTwilioIceServers = async () => {
 
         return response.data.ice_servers;
     } catch (error) {
-        console.error("Failed to fetch Twilio ICE servers:", error);
         return [{ urls: 'stun:stun.l.google.com:19302' }];
     }
 };
@@ -159,6 +155,7 @@ export const uploadFile = (req: Request, res: Response) => {
     try {
         const meetingId = req.params.id;
         const file = (req as any).file;
+        const io = (global as any).io;
 
         if (!file) {
             return res.status(400).send({ message: 'No file uploaded.' });
@@ -166,7 +163,8 @@ export const uploadFile = (req: Request, res: Response) => {
 
         const fileData = {
             key: file.key,
-            url: file.location
+            url: file.location,
+            originalName: file.originalname
         };
 
         if (io) {
@@ -175,7 +173,6 @@ export const uploadFile = (req: Request, res: Response) => {
 
         return res.status(200).json({ message: 'Upload successful', file: fileData });
     } catch (error) {
-        console.error('uploadFile error:', error);
         return res.status(500).send({ message: 'Upload failed' });
     }
 };
