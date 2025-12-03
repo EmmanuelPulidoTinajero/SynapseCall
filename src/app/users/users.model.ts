@@ -1,4 +1,3 @@
-
 import { Schema, model } from 'mongoose';
 import { IUser } from '../interfaces/user';
 
@@ -7,7 +6,10 @@ const userSchema = new Schema<IUser>({
   email: { type: String, required: true, unique: true },
   password_hash: { type: String, required: true },
   refresh_tokens: [{ type: String }],
-  //organization_id: { type: Schema.Types.ObjectId, ref: 'Organization' },
+  isVerified: { type: Boolean, default: false },
+  verificationToken: { type: String },
+  resetPasswordToken: { type: String },
+  resetPasswordExpires: { type: Date },
 });
 
 const User = model<IUser>('User', userSchema);
