@@ -39,11 +39,11 @@
       messageElement.style.margin = "5px 0";
       messageElement.innerHTML = `
         <strong>Sistema:</strong> Ha compartido un archivo: <br/>
-        <a href="${url}" target="_blank" rel="noopener noreferrer" style="color: blue; text-decoration: underline;">
+        <a href="${url}" download target="_blank" rel="noopener noreferrer" style="color: blue; text-decoration: underline;">
             📥 Descargar ${originalName}
         </a>
       `;
-      
+
       chatMessagesContainer.appendChild(messageElement);
       chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
   }

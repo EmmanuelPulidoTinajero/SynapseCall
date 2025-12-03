@@ -46,14 +46,14 @@ dbConnect().then(()=> {
             origin: "*"
         }
     });
-    
+
     (global as any).io = io;
 
     io.on("connection", (socket: any) => {
         socket.on("join-meeting", (meetingId: string, userId: string) => {
             socket.join(meetingId);
             socket.broadcast.to(meetingId).emit("user-connected", userId);
-            
+
             socket.on("message", (data: {message: string, userName:string}) => {
                 const body = {
                     userName: data.userName,
@@ -61,7 +61,7 @@ dbConnect().then(()=> {
                 };
                 io.to(meetingId).emit("message", body);
             });
-            
+
             socket.on("disconnect", () => {
                 socket.broadcast.to(meetingId).emit("user-disconnected", userId);
             });

@@ -50,6 +50,7 @@ export const enterMeeting = async (req: Request, res: Response) => {
         const s3Bucket = s3Storage;
         const keys = await listAllS3Keys(meetingId);
         const links = await getS3DownloadLink(keys);
+        console.log(keys);
 
         const iceServers = await getTwilioIceServers();
 
@@ -151,7 +152,7 @@ export const deleteMeeting = async (req: Request, res: Response) => {
     }
 }
 
-export const uploadFile = (req: Request, res: Response) => {
+export const uploadFile = async (req: Request, res: Response) => {
     try {
         const meetingId = req.params.id;
         const file = (req as any).file;
@@ -161,9 +162,12 @@ export const uploadFile = (req: Request, res: Response) => {
             return res.status(400).send({ message: 'No file uploaded.' });
         }
 
+        const generatedLinks = await getS3DownloadLink([file.key]);
+        const presignedUrl = generatedLinks[0]?.url || file.location;
+
         const fileData = {
             key: file.key,
-            url: file.location,
+            url: presignedUrl,
             originalName: file.originalname
         };
 
@@ -173,6 +177,7 @@ export const uploadFile = (req: Request, res: Response) => {
 
         return res.status(200).json({ message: 'Upload successful', file: fileData });
     } catch (error) {
+        console.error("Upload error:", error);
         return res.status(500).send({ message: 'Upload failed' });
     }
 };
