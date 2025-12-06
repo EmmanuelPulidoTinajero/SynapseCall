@@ -29,7 +29,7 @@
   "type": "mit",
   "main": "index.js",
   "scripts": {
-    "test": "jest --config src/tests/jest.config.ts --runInBand",
+    "test": "jest --config src/tests/jest.config.js --runInBand",
     "dev": "nodemon src/index.ts",
     "scripts": "tsc",
     "test:watch": "jest --config src/tests/jest.config.ts --watch"

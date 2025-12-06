@@ -32,7 +32,7 @@ export const signup = async (req: Request, res: Response) => {
         };
 
         await User.create(newUser);
-        
+
         await sendVerificationEmail(newUser.email, verificationToken, newUser.name);
 
         return res.status(201).json({ message: "User Created. Please check your email to verify account." });
@@ -48,7 +48,8 @@ export const login = async (req: Request, res: Response) => {
             return res.status(400).json({ message: "Missing credentials" });
         }
 
-        const foundUser = await User.findOne({ email }).lean();
+        const foundUser = await User.findOne({ email });
+
         if (!foundUser) {
             return res.status(404).json({ message: "User Not Found" });
         }
@@ -88,6 +89,7 @@ export const login = async (req: Request, res: Response) => {
         });
 
     } catch (error) {
+        console.error("Login Error:", error);
         return res.status(500).json({ message: "Server error" });
     }
 };
@@ -188,7 +190,7 @@ export const forgotPassword = async (req: Request, res: Response) => {
 
         const resetToken = uuidv4();
         user.resetPasswordToken = resetToken;
-        user.resetPasswordExpires = new Date(Date.now() + 3600000); 
+        user.resetPasswordExpires = new Date(Date.now() + 3600000);
         await user.save();
 
         await sendPasswordResetEmail(user.email, resetToken, user.name);
