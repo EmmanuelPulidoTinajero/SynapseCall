@@ -9,7 +9,8 @@ import {
     renderResetPassword,
     renderLogin,
     renderSignup,
-    renderForgotPassword
+    renderForgotPassword,
+    logout
 } from "./auth.controller";
 import { authentication } from "../middlewares/authentication";
 
@@ -26,6 +27,7 @@ router.post("/forgot-password", forgotPassword);
 
 router.get("/verify-account/:token", verifyAccount);
 router.post("/refreshToken", refreshToken);
+router.post("/logout", logout); 
 
 router.get("/reset-password/:token", renderResetPassword);
 router.post("/reset-password/:token", resetPassword);

@@ -1,6 +1,8 @@
+import { Types } from "mongoose";
+
 export interface IAgenda {
-    id: string; //UUID
-    currentItemIndex: number; //int
+    id?: string;
+    currentItemIndex: number;
     isAutoAdvanceEnabled: boolean;
-    //meeting_id: string UUID; - Restricted, para implementación concreta
+    meeting_id: Types.ObjectId; 
 }

@@ -72,6 +72,7 @@
     "@types/multer-s3": "^3.0.3",
     "@types/node": "^24.10.1",
     "@types/nodemailer": "^7.0.4",
+    "@types/paypal__checkout-server-sdk": "^1.0.8",
     "@types/peerjs": "^0.0.30",
     "@types/socket.io": "^3.0.1",
     "@types/supertest": "^6.0.3",

@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { getMeetings, enterMeeting, createMeeting, updateMeeting, deleteMeeting, uploadFile } from "./meetings.controller";
-import { authentication } from "../middlewares/authentication";
+import { authentication, tryAuthentication } from "../middlewares/authentication"; 
 import upload from "../middlewares/upload";
 import { getAgenda, addAgendaItem, updateAgendaItem, deleteAgendaItem } from "./agenda.controller";
 const router = Router();
@@ -86,7 +86,6 @@ const router = Router();
  *         description: Unauthorized
  */
 router.get("/", authentication , getMeetings);
-router.get("/:id", enterMeeting),
 router.post("/", authentication, createMeeting);
 
 /**
@@ -148,6 +147,7 @@ router.post("/", authentication, createMeeting);
  *       '404':
  *         description: Not Found - Meeting with this ID does not exist.
  */
+router.get("/:id", tryAuthentication, enterMeeting); 
 router.put("/:id", authentication, updateMeeting);
 router.delete("/:id", authentication, deleteMeeting);
 router.post("/:id/uploadFiles", upload.single("file"), uploadFile);

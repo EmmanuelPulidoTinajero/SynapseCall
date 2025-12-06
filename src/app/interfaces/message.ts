@@ -1,6 +1,9 @@
+import { Types } from "mongoose";
+
 export interface IMessage {
-    id: string;
+    id?: string;
+    text: string;
     timestamp: Date;
-    //sender_id: string UUID; - Restricted, para implementación concreta
-    //meeting_id: string UUID: - Restricted, para implementación concreta
+    sender_id: Types.ObjectId;
+    meeting_id: Types.ObjectId;
 }

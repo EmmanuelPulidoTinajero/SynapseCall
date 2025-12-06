@@ -41,7 +41,7 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
 
         if (res.ok) {
             localStorage.setItem('accessToken', data.accessToken);
-            window.location.href = '/meetings'; 
+            window.location.href = '/'; 
         } else {
             alert(data.message || 'Error al iniciar sesión');
         }

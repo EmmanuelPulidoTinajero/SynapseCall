@@ -1,5 +1,7 @@
+import { Types } from "mongoose";
+
 export interface IBreakoutRoom {
-    id: string;
+    id?: string;
     roomName: string;
-    //meeting_id: string UUID; - Restricted, para implementación concreta
+    meeting_id: Types.ObjectId;
 }

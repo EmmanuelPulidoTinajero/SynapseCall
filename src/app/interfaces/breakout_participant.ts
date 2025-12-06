@@ -1,4 +1,6 @@
+import { Types } from "mongoose";
+
 export interface IBreakoutRoomParticipant {
-    //breakout_room_id: string UUID; - Restricted, para implementación concreta
-    //user_id: string UUID; - Restricted, para implementación concreta
+    breakout_room_id: Types.ObjectId;
+    user_id: Types.ObjectId;
 }

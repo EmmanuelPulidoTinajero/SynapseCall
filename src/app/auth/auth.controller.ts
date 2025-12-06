@@ -28,7 +28,12 @@ export const signup = async (req: Request, res: Response) => {
             email: userInfo.email,
             password_hash: await bcrypt.hash(userInfo.password_hash, saltRounds),
             verificationToken: verificationToken,
-            isVerified: false
+            isVerified: false,
+            
+            personalSubscription: {
+                status: 'inactive',
+                plan: 'free'
+            }
         };
 
         await User.create(newUser);
@@ -81,6 +86,10 @@ export const login = async (req: Request, res: Response) => {
             httpOnly: true,
             signed: true,
             maxAge: 7 * 24 * 60 * 60 * 1000
+        });
+        res.cookie('accessToken', accessToken, {
+            httpOnly: true,
+            maxAge: 15 * 60 * 1000 // 15 minutos
         });
 
         return res.status(200).json({
@@ -146,7 +155,8 @@ export const refreshToken = async (req: Request, res: Response) => {
 
 export const logout = async (req: Request, res: Response) => {
     const cookies = req.signedCookies;
-    if (!cookies?.refresh) return res.sendStatus(204);
+    
+    if (!cookies?.refresh) return res.redirect('/');
 
     const refreshToken = cookies.refresh;
     const foundUser = await User.findOne({ refresh_tokens: refreshToken }).exec();
@@ -157,7 +167,10 @@ export const logout = async (req: Request, res: Response) => {
     }
 
     res.clearCookie('refresh', { httpOnly: true, signed: true });
-    return res.sendStatus(204);
+    res.clearCookie('accessToken'); // Limpiamos también el access token
+    
+
+    return res.redirect('/'); 
 }
 
 export const verifyAccount = async (req: Request, res: Response) => {
@@ -281,7 +294,7 @@ export const renderLandingOrHome = async (req: Request, res: Response) => {
 
         return res.render('home', { 
             layout: 'main', 
-            ...viewData 
+            ...viewData,
             paypalClientId: process.env.PAYPAL_CLIENT_ID 
         });
 
