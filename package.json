@@ -29,9 +29,10 @@
   "type": "mit",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "jest --config src/tests/jest.config.ts --runInBand",
     "dev": "nodemon src/index.ts",
-    "scripts": "tsc"
+    "scripts": "tsc",
+    "test:watch": "jest --config src/tests/jest.config.ts --watch"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.933.0",
@@ -63,6 +64,7 @@
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.5",
     "@types/express-handlebars": "^5.3.1",
+    "@types/jest": "^30.0.0",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/multer": "^2.0.0",
     "@types/multer-s3": "^3.0.3",
@@ -70,10 +72,14 @@
     "@types/nodemailer": "^7.0.4",
     "@types/peerjs": "^0.0.30",
     "@types/socket.io": "^3.0.1",
+    "@types/supertest": "^6.0.3",
     "@types/swagger-jsdoc": "^6.0.4",
     "@types/swagger-ui-express": "^4.1.8",
     "@types/uuid": "^10.0.0",
+    "jest": "^29.7.0",
     "nodemon": "^3.1.11",
+    "supertest": "^7.1.4",
+    "ts-jest": "^29.4.6",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3"
   }

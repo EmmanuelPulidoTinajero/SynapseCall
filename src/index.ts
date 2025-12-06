@@ -71,3 +71,5 @@ dbConnect().then(()=> {
 .catch(() => {
     console.log("Failed to connect to database");
 });
+
+export default app;
