@@ -70,16 +70,13 @@ describe("Meetings", () => {
 		const req = mockReq({
 			title: "hola",
 		});
-
 		const res = mockRes();
-
 		await createMeeting(req, res);
 
 		expect(res.status).toHaveBeenCalledWith(400);
 		expect(res.send).toHaveBeenCalledWith({
 			message: "Missing meeting information.",
 		});
-
 		expect(meetingModel.create).not.toHaveBeenCalled();
 	});
 
@@ -93,14 +90,11 @@ describe("Meetings", () => {
 		});
 
 		const res = mockRes();
-
 		await createMeeting(req, res);
-
 		expect(res.status).toHaveBeenCalledWith(400);
 		expect(res.send).toHaveBeenCalledWith({
 			message: "Invalid startTime format. Use ISO date string.",
 		});
-
 		expect(meetingModel.create).not.toHaveBeenCalled();
 	});
 
@@ -108,15 +102,11 @@ describe("Meetings", () => {
 
 		const req = mockReq();
 		const res = mockRes();
-
 		meetingModel.find.mockResolvedValueOnce([]);
-
 		await getMeetings(req, res);
-
 		expect(meetingModel.find).toHaveBeenCalledWith({});
 		expect(res.status).toHaveBeenCalledWith(200);
 		expect(res.send).toHaveBeenCalledWith({
-			// ajusta al mensaje real
 			message: "No meetings created yet.",
 		});
 	});
@@ -125,16 +115,13 @@ describe("Meetings", () => {
 
 		const req = mockReq();
 		const res = mockRes();
-
 		const testMeetings = [
 			{ id: "1", title: "Test1", status: "scheduled" },
 			{ id: "2", title: "Test2", status: "ended" },
 		];
 
 		meetingModel.find.mockResolvedValueOnce(testMeetings);
-
 		await getMeetings(req, res);
-
 		expect(meetingModel.find).toHaveBeenCalledWith({});
 		expect(res.status).toHaveBeenCalledWith(200);
 		expect(res.send).toHaveBeenCalledWith({
