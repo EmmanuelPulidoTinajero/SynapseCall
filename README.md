@@ -12,3 +12,8 @@ npm i -D @types/node @types/express
 
 npx tsc --init
 
+# Testing
+general:
+npm run test
+para el meetings:
+npm test -- meetings.test.ts
