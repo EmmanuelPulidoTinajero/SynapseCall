@@ -1,5 +1,7 @@
+import { Types } from "mongoose";
+
 export interface IUser {
-    id: string;
+    id?: string;
     name: string;
     email: string;
     password_hash: string;
@@ -8,5 +10,11 @@ export interface IUser {
     verificationToken?: string;
     resetPasswordToken?: string;
     resetPasswordExpires?: Date;
-    // organization_id: string;
+    organizationId?: Types.ObjectId;
+    personalSubscription: {
+        status: "active" | "inactive" | "past_due";
+        plan: "individual_pro" | "free";
+        expiresAt?: Date;
+        paypalSubscriptionId?: string;
+    };
 }

@@ -1,4 +1,3 @@
-
 import { Schema, model } from 'mongoose';
 import { IMeetingParticipant } from '../interfaces/meeting_participant';
 
@@ -10,8 +9,10 @@ const meetingParticipantSchema = new Schema<IMeetingParticipant>({
     enum: ['host', 'cohost', 'moderator', 'member', 'guest'],
     default: 'member',
   },
-  joinedAt: { type: Date },
+  joinedAt: { type: Date, default: Date.now },
   leftAt: { type: Date },
+  displayName: { type: String, required: true },
+  isMutedByHost: { type: Boolean, default: false }
 });
 
 const MeetingParticipant = model<IMeetingParticipant>('MeetingParticipant', meetingParticipantSchema);

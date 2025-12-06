@@ -241,3 +241,52 @@ export const renderSignup = (req: Request, res: Response) => {
 export const renderForgotPassword = (req: Request, res: Response) => {
     res.render('forgot-password');
 };
+
+export const renderLandingOrHome = async (req: Request, res: Response) => {
+    const userPayload = (req as any).user;
+
+
+    if (!userPayload) {
+        return res.render('landing', { 
+            layout: 'main', 
+            title: 'Bienvenido a Synapse Call' 
+        });
+    }
+
+    
+    try {
+        
+        const user = await User.findById(userPayload.id).populate('organizationId').exec();
+
+        if (!user) {
+            
+            return res.clearCookie('accessToken').clearCookie('refresh').redirect('/');
+        }
+
+        const organization = user.organizationId as any;
+        
+        
+        const viewData = {
+            user: {
+                name: user.name,
+                email: user.email,
+                isPro: user.personalSubscription.status === 'active' || (organization?.subscription?.status === 'active')
+            },
+            organization: organization ? {
+                name: organization.name,
+                logoUrl: organization.logoUrl,
+                isOwner: organization.ownerId.toString() === user.id
+            } : null
+        };
+
+        return res.render('home', { 
+            layout: 'main', 
+            ...viewData 
+            paypalClientId: process.env.PAYPAL_CLIENT_ID 
+        });
+
+    } catch (error) {
+        console.error("Error rendering home:", error);
+        return res.render('landing');
+    }
+};

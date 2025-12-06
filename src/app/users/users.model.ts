@@ -10,6 +10,21 @@ const userSchema = new Schema<IUser>({
   verificationToken: { type: String },
   resetPasswordToken: { type: String },
   resetPasswordExpires: { type: Date },
+  organizationId: { type: Schema.Types.ObjectId, ref: 'Organization' },
+  personalSubscription: {
+    status: { 
+        type: String, 
+        enum: ['active', 'inactive', 'past_due'], 
+        default: 'inactive' 
+    },
+    plan: { 
+        type: String, 
+        enum: ['individual_pro', 'free'], 
+        default: 'free' 
+    },
+    expiresAt: { type: Date },
+    paypalSubscriptionId: { type: String }
+  }
 });
 
 const User = model<IUser>('User', userSchema);

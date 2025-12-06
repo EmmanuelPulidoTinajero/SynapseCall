@@ -1,7 +1,10 @@
 export interface IAgendaItem {
-    id: string; //UUID
+    id?: string;
     topic: string;
-    durationInMinutes: number //int
-    //agenda_id: string UUID - Restricted, para implementación concreta
-    //presented_id: string UUID - Restricted, para implementación concreta
+    durationInMinutes: number;
+    order: number;
+    status: "pending" | "active" | "completed";
+    actualStartTime?: Date;
+    agenda_id?: string;
+    presenter_id?: string;
 }

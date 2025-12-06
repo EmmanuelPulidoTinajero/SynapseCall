@@ -1,6 +1,8 @@
 import { Request, Response } from 'express';
 import Meeting from './meetings.model';
 import { IMeeting } from '../interfaces/meeting';
+import User from '../users/users.model'; // Importar User
+import Organization from '../organizations/org.model'; // Importar Organization
 import { s3Storage } from '../middlewares/upload';
 import { getS3DownloadLink , listAllS3Keys} from '../utils/s3.utils';
 import axios from 'axios';
@@ -47,21 +49,64 @@ export const getMeetings = async (req: Request, res: Response) => {
 export const enterMeeting = async (req: Request, res: Response) => {
     try {
         const meetingId = req.params.id;
+        const currentUser = (req as any).user; // Viene del middleware (puede ser null si es invitado)
+
+
+        const meeting = await Meeting.findById(meetingId);
+        if (!meeting) {
+            return res.status(404).send("<h1>Reunión no encontrada</h1>");
+        }
+
+        
+        const hostUser = await User.findById(meeting.initiator_id).populate('organizationId');
+        
+        let isPro = false;
+        let orgData = null;
+
+        if (hostUser) {
+            const org = hostUser.organizationId as any;
+            
+
+            const isPersonalPro = hostUser.personalSubscription.status === 'active';
+            const isOrgPro = org && org.subscription.status === 'active';
+            
+            isPro = isPersonalPro || isOrgPro;
+
+            
+            if (isOrgPro && org) {
+                orgData = {
+                    name: org.name,
+                    logo: org.logoUrl
+                };
+            }
+        }
+
+        
+        const isHost = currentUser && currentUser.id === meeting.initiator_id;
+
+
         const s3Bucket = s3Storage;
         const keys = await listAllS3Keys(meetingId);
         const links = await getS3DownloadLink(keys);
-        console.log(keys);
-
         const iceServers = await getTwilioIceServers();
 
+        
         res.render("meeting", {
+            layout: false, // La vista de reunión suele tener su propio layout o ninguno
             meetingId: meetingId,
-            s3Bucket: s3Bucket,
+            meetingTitle: meeting.title,
+            isPro: isPro,
+            isHost: isHost,
+            orgName: orgData?.name,
+            orgLogo: orgData?.logo,
+            s3Bucket: s3Bucket, // (Opcional si no lo usas en la vista directamente)
             downloadLinksJson: JSON.stringify(links),
             iceServersJson: JSON.stringify(iceServers)
         });
+
     } catch (error) {
-        return res.status(500).send({ message: "Server error" });
+        console.error("Error entering meeting:", error);
+        return res.status(500).send("<h1>Error del servidor al entrar a la reunión</h1>");
     }
 };
 

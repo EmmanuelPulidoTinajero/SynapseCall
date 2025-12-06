@@ -2,6 +2,7 @@ import { Router } from "express";
 import { getMeetings, enterMeeting, createMeeting, updateMeeting, deleteMeeting, uploadFile } from "./meetings.controller";
 import { authentication } from "../middlewares/authentication";
 import upload from "../middlewares/upload";
+import { getAgenda, addAgendaItem, updateAgendaItem, deleteAgendaItem } from "./agenda.controller";
 const router = Router();
 
 /**
@@ -149,10 +150,10 @@ router.post("/", authentication, createMeeting);
  */
 router.put("/:id", authentication, updateMeeting);
 router.delete("/:id", authentication, deleteMeeting);
-
-
-// File upload endpoints
 router.post("/:id/uploadFiles", upload.single("file"), uploadFile);
-
+router.get("/:meetingId/agenda", authentication, getAgenda);
+router.post("/:meetingId/agenda/items", authentication, addAgendaItem);
+router.patch("/agenda/items/:itemId", authentication, updateAgendaItem);
+router.delete("/agenda/items/:itemId", authentication, deleteAgendaItem);
 export default router;
 

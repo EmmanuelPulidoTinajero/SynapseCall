@@ -1,7 +1,11 @@
+import { Types } from "mongoose";
+
 export interface IMeetingParticipant {
     role: "host" | "cohost" | "moderator" | "member" | "guest";
     joinedAt: Date;
-    leftAt: Date;
-    //meeting_id: string UUID; - Restricted, para implementación concreta
-    //user_id: string UUID; - Restricted, para implementación concreta
+    leftAt?: Date;
+    displayName: string;
+    isMutedByHost: boolean;
+    meeting_id: Types.ObjectId;
+    user_id: Types.ObjectId;
 }

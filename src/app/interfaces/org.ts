@@ -1,6 +1,16 @@
+import { Types } from "mongoose";
+
 export interface IOrganization {
-    id: string;
+    id?: string;
     name: string;
-    domain: string;
-    subscriptionTier: "free" | "pro" | "enterprise";
+    domain?: string;
+    ownerId: Types.ObjectId;
+    logoUrl?: string;
+    members: Types.ObjectId[];
+    subscription: {
+        status: "active" | "inactive" | "past_due";
+        plan: "organization_tier" | "free";
+        expiresAt?: Date;
+        paypalSubscriptionId?: string;
+    };
 }
