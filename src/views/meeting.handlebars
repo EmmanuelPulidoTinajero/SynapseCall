@@ -1,115 +1,115 @@
-<div class="meeting-container" style="display: flex; height: 100vh; overflow: hidden; background: #202124;">
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{meetingTitle}} - Synapse Call</title>
+    <link rel="icon" href="data:,">
+    <link rel="stylesheet" href="/static/styles/styles.css">
     
-    <div class="main-area" style="flex: 1; display: flex; flex-direction: column; position: relative;">
+    <script>
+        window.MEETING_DATA = {
+            meetingId: "{{meetingId}}",
+            isHost: {{#if isHost}}true{{else}}false{{/if}},
+            isPro: {{#if isPro}}true{{else}}false{{/if}},
+            iceServers: {{{iceServersJson}}}
+        };
+    </script>
+
+    <script src="https://unpkg.com/peerjs@1.5.5/dist/peerjs.min.js"></script>
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js" crossorigin="anonymous"></script>
+    <script src="/static/assets/meeting.js" defer></script>
+</head>
+<body style="margin: 0; padding: 0;">
+
+    <div class="meeting-container" style="display: flex; height: 100vh; overflow: hidden; background: #202124;">
         
-        <div class="top-bar" style="background: rgba(0,0,0,0.6); color: white; padding: 10px; display: flex; justify-content: space-between; align-items: center; position: absolute; top: 0; left: 0; right: 0; z-index: 10;">
+        <div class="main-area" style="flex: 1; display: flex; flex-direction: column; position: relative;">
             
-            <div class="branding" style="display: flex; align-items: center; gap: 10px;">
-                {{#if orgLogo}}
-                    <img src="{{orgLogo}}" alt="Org" style="height: 30px; border-radius: 4px;">
-                {{/if}}
-                {{#if orgName}}
-                    <span style="font-weight: bold; font-size: 0.9rem;">{{orgName}}</span>
-                    <span style="margin: 0 5px;">|</span>
-                {{/if}}
-                <span>{{meetingTitle}}</span>
-            </div>
-
-            <div id="active-agenda-display" style="display: none; background: #333; padding: 5px 15px; border-radius: 20px; border: 1px solid #555;">
-                <span id="current-topic" style="font-weight: bold; color: #4dabf7;">Tema Actual</span>
-                <span style="margin: 0 5px;">-</span>
-                <span id="timer-countdown" style="font-family: monospace; font-size: 1.1rem; font-weight: bold;">00:00</span>
-            </div>
-
-            <div class="controls">
-                {{#if isPro}}
-                    <button id="toggle-agenda-btn" style="background: #28a745; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">📅 Agenda</button>
-                {{/if}}
-            </div>
-        </div>
-
-        <div id="video-grid" style="flex: 1; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 10px; padding: 60px 10px 10px 10px; overflow-y: auto;"></div>
-        
-        <div class="bottom-controls" style="background: #333; padding: 15px; display: flex; justify-content: center; gap: 20px;">
-            <button id="mute-btn" class="control-btn">🎙️ Mute</button>
-            <button id="video-btn" class="control-btn">📹 Video</button>
-            <button class="control-btn" style="background: #dc3545;" onclick="window.location.href='/'">📞 Salir</button>
-        </div>
-    </div>
-
-    <div id="side-panel" style="width: 350px; background: white; border-left: 1px solid #ccc; display: flex; flex-direction: column;">
-        
-        <div class="tabs" style="display: flex; border-bottom: 1px solid #ddd;">
-            <button class="tab-btn active" onclick="showTab('chat')" style="flex: 1; padding: 10px; border: none; background: #f0f0f0; cursor: pointer;">Chat</button>
-            {{#if isPro}}
-                <button class="tab-btn" onclick="showTab('agenda')" style="flex: 1; padding: 10px; border: none; background: white; cursor: pointer;">Agenda</button>
-            {{/if}}
-        </div>
-
-        <div id="chat-tab" class="tab-content" style="flex: 1; display: flex; flex-direction: column; overflow: hidden;">
-            <div id="chat-messages" style="flex: 1; overflow-y: auto; padding: 10px;"></div>
-            <form id="chat-form" style="padding: 10px; border-top: 1px solid #eee; display: flex;">
-                <input id="chat-input" type="text" placeholder="Escribe..." style="flex: 1; padding: 8px;">
-                <button type="submit" style="margin-left: 5px; padding: 5px 10px;">Enviar</button>
-            </form>
-            <form id="file-upload-form" action="/meetings/{{meetingId}}/uploadFiles" method="post" enctype="multipart/form-data" style="padding: 5px 10px; background: #f9f9f9;">
-                <input type="file" name="file" id="file-input" style="font-size: 0.8rem;">
-                <button type="submit" id="upload-button" style="font-size: 0.8rem;">Subir</button>
-            </form>
-        </div>
-
-        {{#if isPro}}
-        <div id="agenda-tab" class="tab-content" style="display: none; flex: 1; flex-direction: column; padding: 10px; overflow-y: auto;">
-            <h3>Agenda de Reunión</h3>
-            
-            <div id="agenda-list" style="flex: 1; overflow-y: auto; margin-bottom: 10px;">
-                <p style="color: #999; text-align: center;">Cargando agenda...</p>
-            </div>
-
-            {{#if isHost}}
-            <div class="host-controls" style="border-top: 1px solid #eee; padding-top: 10px;">
-                <h4>Controles de Host</h4>
-                <div style="display: flex; gap: 5px; margin-bottom: 10px;">
-                    <button id="btn-start-agenda" style="flex: 1; background: #28a745; color: white; border: none; padding: 8px; border-radius: 4px; cursor: pointer;">▶ Iniciar</button>
-                    <button id="btn-next-item" style="flex: 1; background: #007bff; color: white; border: none; padding: 8px; border-radius: 4px; cursor: pointer;">⏭ Siguiente</button>
-                </div>
+            <div class="top-bar" style="background: rgba(0,0,0,0.6); color: white; padding: 10px; display: flex; justify-content: space-between; align-items: center; position: absolute; top: 0; left: 0; right: 0; z-index: 10;">
                 
-                <form id="add-agenda-form" style="display: flex; gap: 5px; flex-wrap: wrap;">
-                    <input type="text" id="new-topic" placeholder="Nuevo tema" style="flex: 2; padding: 5px;">
-                    <input type="number" id="new-duration" placeholder="Min" style="width: 50px; padding: 5px;">
-                    <button type="submit" style="background: #6c757d; color: white; border: none; padding: 5px 10px;">+</button>
+                <div class="branding" style="display: flex; align-items: center; gap: 10px;">
+                    {{#if orgLogo}}
+                        <img src="{{orgLogo}}" alt="Org" style="height: 30px; border-radius: 4px;">
+                    {{/if}}
+                    {{#if orgName}}
+                        <span style="font-weight: bold; font-size: 0.9rem;">{{orgName}}</span>
+                        <span style="margin: 0 5px;">|</span>
+                    {{/if}}
+                    <span>{{meetingTitle}}</span>
+                </div>
+
+                <div id="active-agenda-display" style="display: none; background: #333; padding: 5px 15px; border-radius: 20px; border: 1px solid #555;">
+                    <span id="current-topic" style="font-weight: bold; color: #4dabf7;">Tema Actual</span>
+                    <span style="margin: 0 5px;">-</span>
+                    <span id="timer-countdown" style="font-family: monospace; font-size: 1.1rem; font-weight: bold;">00:00</span>
+                </div>
+
+                <div class="controls">
+                    {{#if isPro}}
+                        <button id="toggle-agenda-btn" style="background: #28a745; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">📅 Agenda</button>
+                    {{/if}}
+                </div>
+            </div>
+
+            <div id="video-grid" style="flex: 1; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 10px; padding: 60px 10px 10px 10px; overflow-y: auto;"></div>
+            
+            <div class="bottom-controls" style="background: #333; padding: 15px; display: flex; justify-content: center; gap: 20px;">
+                <button id="mute-btn" class="control-btn">🎙️ Mute</button>
+                <button id="video-btn" class="control-btn">📹 Video</button>
+                <button class="control-btn" style="background: #dc3545;" onclick="window.location.href='/'">📞 Salir</button>
+            </div>
+        </div>
+
+        <div id="side-panel" style="width: 350px; background: white; border-left: 1px solid #ccc; display: flex; flex-direction: column;">
+            
+            <div class="tabs" style="display: flex; border-bottom: 1px solid #ddd;">
+                <button id="tab-btn-chat" class="tab-btn active" style="flex: 1; padding: 10px; border: none; background: #f0f0f0; cursor: pointer;">Chat</button>
+                {{#if isPro}}
+                    <button id="tab-btn-agenda" class="tab-btn" style="flex: 1; padding: 10px; border: none; background: white; cursor: pointer;">Agenda</button>
+                {{/if}}
+            </div>
+
+            <div id="chat-tab" class="tab-content" style="flex: 1; display: flex; flex-direction: column; overflow: hidden;">
+                <div id="chat-messages" style="flex: 1; overflow-y: auto; padding: 10px;"></div>
+                <form id="chat-form" style="padding: 10px; border-top: 1px solid #eee; display: flex;">
+                    <input id="chat-input" type="text" placeholder="Escribe..." style="flex: 1; padding: 8px;">
+                    <button type="submit" style="margin-left: 5px; padding: 5px 10px;">Enviar</button>
+                </form>
+                
+                <form id="file-upload-form" action="/meetings/{{meetingId}}/uploadFiles" method="post" enctype="multipart/form-data" style="padding: 5px 10px; background: #f9f9f9;">
+                    <input type="file" name="file" id="file-input" style="font-size: 0.8rem;">
+                    <button type="submit" id="upload-button" style="font-size: 0.8rem;">Subir</button>
                 </form>
             </div>
+
+            {{#if isPro}}
+            <div id="agenda-tab" class="tab-content" style="display: none; flex: 1; flex-direction: column; padding: 10px; overflow-y: auto;">
+                <h3>Agenda de Reunión</h3>
+                
+                <div id="agenda-list" style="flex: 1; overflow-y: auto; margin-bottom: 10px;">
+                    <p style="color: #999; text-align: center;">Cargando agenda...</p>
+                </div>
+
+                {{#if isHost}}
+                <div class="host-controls" style="border-top: 1px solid #eee; padding-top: 10px;">
+                    <h4>Controles de Host</h4>
+                    <div style="display: flex; gap: 5px; margin-bottom: 10px;">
+                        <button id="btn-start-agenda" style="flex: 1; background: #28a745; color: white; border: none; padding: 8px; border-radius: 4px; cursor: pointer;">▶ Iniciar</button>
+                        <button id="btn-next-item" style="flex: 1; background: #007bff; color: white; border: none; padding: 8px; border-radius: 4px; cursor: pointer;">⏭ Siguiente</button>
+                    </div>
+                    
+                    <form id="add-agenda-form" style="display: flex; gap: 5px; flex-wrap: wrap;">
+                        <input type="text" id="new-topic" placeholder="Nuevo tema" style="flex: 2; padding: 5px;">
+                        <input type="number" id="new-duration" placeholder="Min" style="width: 50px; padding: 5px;">
+                        <button type="submit" style="background: #6c757d; color: white; border: none; padding: 5px 10px;">+</button>
+                    </form>
+                </div>
+                {{/if}}
+            </div>
             {{/if}}
+
         </div>
-        {{/if}}
-
     </div>
-</div>
-
-<script>
-    const MEETING_ID = "{{meetingId}}";
-    const IS_HOST = {{isHost}};
-    const IS_PRO = {{isPro}};
-    const ICE_SERVERS = {{{iceServersJson}}};
-    // Variables para lógica de frontend
-    let currentAgendaItem = null;
-    let agendaItems = [];
-
-    // Función para cambiar tabs
-    function showTab(tabName) {
-        document.getElementById('chat-tab').style.display = tabName === 'chat' ? 'flex' : 'none';
-        if(document.getElementById('agenda-tab')) {
-            document.getElementById('agenda-tab').style.display = tabName === 'agenda' ? 'flex' : 'none';
-        }
-        document.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.style.background = btn.textContent.toLowerCase().includes(tabName) ? '#f0f0f0' : 'white';
-        });
-    }
-
-    // Toggle panel
-    document.getElementById('toggle-agenda-btn')?.addEventListener('click', () => {
-        const panel = document.getElementById('side-panel');
-        panel.style.display = panel.style.display === 'none' ? 'flex' : 'none';
-    });
-</script>
+</body>
+</html>

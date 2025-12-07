@@ -1,3 +1,10 @@
+const { meetingId: MEETING_ID, isHost: IS_HOST, isPro: IS_PRO, iceServers: ICE_SERVERS } = window.MEETING_DATA || {};
+
+if (!MEETING_ID) {
+    console.error("Critical: MEETING_DATA not found.");
+    alert("Error de inicialización de la reunión.");
+}
+
 const socket = io("/");
 const videoGrid = document.getElementById("video-grid");
 let myPeer;
@@ -6,17 +13,15 @@ myVideo.muted = true;
 const peers = {};
 const userName = "User" + Math.floor(Math.random() * 1000);
 
-// --- CONFIGURACIÓN PEERJS ---
 const peerConfig = {
     host: window.location.hostname,
     port: window.location.port,
     path: '/peerjs',
     config: {
-        iceServers: typeof ICE_SERVERS !== 'undefined' ? ICE_SERVERS : [{ urls: 'stun:stun.l.google.com:19302' }]
+        iceServers: ICE_SERVERS || [{ urls: 'stun:stun.l.google.com:19302' }]
     }
 };
 
-// --- INICIALIZACIÓN ---
 navigator.mediaDevices.getUserMedia({
   video: true,
   audio: true
@@ -34,16 +39,19 @@ navigator.mediaDevices.getUserMedia({
   
   myPeer.on("open", id => socket.emit("join-meeting", MEETING_ID, id));
 
-  // Botones Mute/Video
   document.getElementById('mute-btn').addEventListener('click', () => {
       const audioTrack = stream.getAudioTracks()[0];
-      audioTrack.enabled = !audioTrack.enabled;
-      document.getElementById('mute-btn').innerText = audioTrack.enabled ? "🎙️ Mute" : "🎙️ Unmute";
+      if(audioTrack) {
+          audioTrack.enabled = !audioTrack.enabled;
+          document.getElementById('mute-btn').innerText = audioTrack.enabled ? "🎙️ Mute" : "🎙️ Unmute";
+      }
   });
   document.getElementById('video-btn').addEventListener('click', () => {
       const videoTrack = stream.getVideoTracks()[0];
-      videoTrack.enabled = !videoTrack.enabled;
-      document.getElementById('video-btn').innerText = videoTrack.enabled ? "📹 Video" : "📹 No Video";
+      if(videoTrack) {
+          videoTrack.enabled = !videoTrack.enabled;
+          document.getElementById('video-btn').innerText = videoTrack.enabled ? "📹 Video" : "📹 No Video";
+      }
   });
 
 }).catch(err => console.error("Stream error:", err));
@@ -66,7 +74,36 @@ function addVideoStream(video, stream) {
   videoGrid.append(video);
 }
 
-// --- CHAT Y ARCHIVOS ---
+const chatTabBtn = document.getElementById('tab-btn-chat');
+const agendaTabBtn = document.getElementById('tab-btn-agenda');
+const chatTab = document.getElementById('chat-tab');
+const agendaTab = document.getElementById('agenda-tab');
+
+function switchTab(tabName) {
+    if (tabName === 'chat') {
+        chatTab.style.display = 'flex';
+        if (agendaTab) agendaTab.style.display = 'none';
+        chatTabBtn.style.background = '#f0f0f0';
+        if (agendaTabBtn) agendaTabBtn.style.background = 'white';
+    } else {
+        chatTab.style.display = 'none';
+        if (agendaTab) agendaTab.style.display = 'flex';
+        chatTabBtn.style.background = 'white';
+        if (agendaTabBtn) agendaTabBtn.style.background = '#f0f0f0';
+    }
+}
+
+if (chatTabBtn) chatTabBtn.addEventListener('click', () => switchTab('chat'));
+if (agendaTabBtn) agendaTabBtn.addEventListener('click', () => switchTab('agenda'));
+
+const toggleBtn = document.getElementById('toggle-agenda-btn');
+if(toggleBtn){
+    toggleBtn.addEventListener('click', () => {
+        const panel = document.getElementById('side-panel');
+        panel.style.display = (panel.style.display === 'none') ? 'flex' : 'none';
+    });
+}
+
 const chatForm = document.getElementById("chat-form");
 if (chatForm) {
     chatForm.addEventListener("submit", e => {
@@ -91,25 +128,62 @@ socket.on('file-uploaded', (fileData) => {
     document.getElementById("chat-messages").appendChild(div);
 });
 
-// --- LÓGICA DE AGENDA (SOLO PRO) ---
-if (typeof IS_PRO !== 'undefined' && IS_PRO) {
-    let agendaTimerInterval;
+const fileForm = document.getElementById("file-upload-form");
+if (fileForm) {
+    fileForm.addEventListener("submit", async (e) => {
+        e.preventDefault(); 
+        const fileInput = document.getElementById("file-input");
+        const uploadButton = document.getElementById("upload-button");
 
-    // Cargar Agenda Inicial
+        if (fileInput.files.length === 0) return;
+
+        const formData = new FormData(fileForm);
+        
+        const originalText = uploadButton.innerText;
+        uploadButton.innerText = "Subiendo...";
+        uploadButton.disabled = true;
+
+        try {
+            const response = await fetch(fileForm.action, {
+                method: 'POST',
+                body: formData
+            });
+
+            if (response.ok) {
+                fileInput.value = ""; 
+            } else {
+                alert("Error al subir archivo");
+            }
+        } catch (error) {
+            console.error("Error subiendo archivo:", error);
+            alert("Error de conexión");
+        } finally {
+            uploadButton.innerText = originalText;
+            uploadButton.disabled = false;
+        }
+    });
+}
+
+if (IS_PRO) {
+    let agendaTimerInterval;
+    let agendaItems = [];
+
     fetch(`/meetings/${MEETING_ID}/agenda`)
         .then(res => res.json())
         .then(data => {
-            renderAgendaList(data.items);
-            // Si hay un item activo, iniciar timer
-            const activeItem = data.items.find(i => i.status === 'active');
-            if (activeItem && activeItem.actualStartTime) {
-                startLocalTimer(activeItem, activeItem.actualStartTime);
-                updateActiveDisplay(activeItem);
+            if(data.items) {
+                renderAgendaList(data.items);
+                const activeItem = data.items.find(i => i.status === 'active');
+                if (activeItem && activeItem.actualStartTime) {
+                    startLocalTimer(activeItem, activeItem.actualStartTime);
+                    updateActiveDisplay(activeItem);
+                }
             }
         });
 
     function renderAgendaList(items) {
         const list = document.getElementById("agenda-list");
+        if (!list) return;
         list.innerHTML = "";
         items.forEach(item => {
             const div = document.createElement("div");
@@ -123,17 +197,13 @@ if (typeof IS_PRO !== 'undefined' && IS_PRO) {
             `;
             list.appendChild(div);
         });
-        // Actualizar referencia global
-        window.agendaItems = items;
+        agendaItems = items;
     }
 
-    // SOCKET: Actualización de Agenda
     socket.on("agenda-update", (data) => {
-        // data: { currentItem, startTime, duration }
         updateActiveDisplay(data.currentItem);
         startLocalTimer(data.currentItem, data.startTime);
         
-        // Recargar lista completa para ver estados
         fetch(`/meetings/${MEETING_ID}/agenda`)
             .then(res => res.json())
             .then(d => renderAgendaList(d.items));
@@ -141,13 +211,17 @@ if (typeof IS_PRO !== 'undefined' && IS_PRO) {
 
     socket.on("agenda-finished", () => {
         clearInterval(agendaTimerInterval);
-        document.getElementById("active-agenda-display").style.display = "none";
+        const activeDisplay = document.getElementById("active-agenda-display");
+        if(activeDisplay) activeDisplay.style.display = "none";
         alert("La agenda ha finalizado.");
     });
 
     function updateActiveDisplay(item) {
-        document.getElementById("active-agenda-display").style.display = "block";
-        document.getElementById("current-topic").innerText = item.topic;
+        const activeDisplay = document.getElementById("active-agenda-display");
+        if(activeDisplay) {
+            activeDisplay.style.display = "block";
+            document.getElementById("current-topic").innerText = item.topic;
+        }
     }
 
     function startLocalTimer(item, startTimeISO) {
@@ -159,72 +233,79 @@ if (typeof IS_PRO !== 'undefined' && IS_PRO) {
         function tick() {
             const now = new Date().getTime();
             const distance = endTime - now;
+            const timerEl = document.getElementById("timer-countdown");
+            if(!timerEl) return;
 
             if (distance < 0) {
-                document.getElementById("timer-countdown").innerText = "00:00 (Tiempo agotado)";
-                document.getElementById("timer-countdown").style.color = "red";
-                // No paramos el intervalo para mostrar que se excedió, o podríamos pararlo.
+                timerEl.innerText = "00:00 (Tiempo agotado)";
+                timerEl.style.color = "red";
                 return;
             }
 
             const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
             const seconds = Math.floor((distance % (1000 * 60)) / 1000);
             
-            document.getElementById("timer-countdown").innerText = 
+            timerEl.innerText = 
                 `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-            document.getElementById("timer-countdown").style.color = "white";
+            timerEl.style.color = "white";
         }
 
-        tick(); // Ejecutar inmediatamente
+        tick();
         agendaTimerInterval = setInterval(tick, 1000);
     }
 
-    // --- CONTROLES DE HOST ---
-    if (typeof IS_HOST !== 'undefined' && IS_HOST) {
-        
-        document.getElementById("add-agenda-form").addEventListener("submit", async (e) => {
-            e.preventDefault();
-            const topic = document.getElementById("new-topic").value;
-            const duration = document.getElementById("new-duration").value;
-            const order = (window.agendaItems?.length || 0) + 1;
+    if (IS_HOST) {
+        const addAgendaForm = document.getElementById("add-agenda-form");
+        if(addAgendaForm) {
+            addAgendaForm.addEventListener("submit", async (e) => {
+                e.preventDefault();
+                const topic = document.getElementById("new-topic").value;
+                const duration = document.getElementById("new-duration").value;
+                const order = (agendaItems?.length || 0) + 1;
 
-            await fetch(`/meetings/${MEETING_ID}/agenda/items`, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ topic, durationInMinutes: duration, order })
-            });
-            // Recargar lista
-            fetch(`/meetings/${MEETING_ID}/agenda`)
-                .then(res => res.json())
-                .then(d => renderAgendaList(d.items));
-            
-            document.getElementById("new-topic").value = "";
-            document.getElementById("new-duration").value = "";
-        });
-
-        document.getElementById("btn-start-agenda").addEventListener("click", () => {
-            // Buscar primer pendiente
-            const pending = window.agendaItems.find(i => i.status === 'pending');
-            if(pending) {
-                socket.emit("agenda-start", { meetingId: MEETING_ID, firstItemId: pending._id });
-            } else {
-                alert("No hay temas pendientes.");
-            }
-        });
-
-        document.getElementById("btn-next-item").addEventListener("click", () => {
-            const current = window.agendaItems.find(i => i.status === 'active');
-            const next = window.agendaItems.find(i => i.status === 'pending');
-            
-            if(next) {
-                socket.emit("agenda-next", { 
-                    currentItemId: current ? current._id : null, 
-                    nextItemId: next._id 
+                await fetch(`/meetings/${MEETING_ID}/agenda/items`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ topic, durationInMinutes: duration, order })
                 });
-            } else {
-                if(current) socket.emit("agenda-stop", { currentItemId: current._id }); // Terminar último
-                alert("Fin de la agenda.");
-            }
-        });
+                
+                fetch(`/meetings/${MEETING_ID}/agenda`)
+                    .then(res => res.json())
+                    .then(d => renderAgendaList(d.items));
+                
+                document.getElementById("new-topic").value = "";
+                document.getElementById("new-duration").value = "";
+            });
+        }
+
+        const btnStart = document.getElementById("btn-start-agenda");
+        if(btnStart) {
+            btnStart.addEventListener("click", () => {
+                const pending = agendaItems.find(i => i.status === 'pending');
+                if(pending) {
+                    socket.emit("agenda-start", { meetingId: MEETING_ID, firstItemId: pending._id });
+                } else {
+                    alert("No hay temas pendientes.");
+                }
+            });
+        }
+
+        const btnNext = document.getElementById("btn-next-item");
+        if(btnNext) {
+            btnNext.addEventListener("click", () => {
+                const current = agendaItems.find(i => i.status === 'active');
+                const next = agendaItems.find(i => i.status === 'pending');
+                
+                if(next) {
+                    socket.emit("agenda-next", { 
+                        currentItemId: current ? current._id : null, 
+                        nextItemId: next._id 
+                    });
+                } else {
+                    if(current) socket.emit("agenda-stop", { currentItemId: current._id });
+                    alert("Fin de la agenda.");
+                }
+            });
+        }
     }
 }

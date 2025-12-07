@@ -82,8 +82,8 @@ export const enterMeeting = async (req: Request, res: Response) => {
 
         const iceServers = await getTwilioIceServers();
 
-        res.render("meeting", {
-            layout: false,
+        res.render("meeting", {                
+            layout: false, 
             meetingId: meetingId,
             meetingTitle: meeting.title,
             isPro: isPro,
