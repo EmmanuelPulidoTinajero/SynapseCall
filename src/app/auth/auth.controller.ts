@@ -80,15 +80,15 @@ export const signup = async (req: Request, res: Response) => {
             return res.status(409).json({ message: "User already exists" });
         }
 
-        const verificationToken = uuidv4();
+        // const verificationToken = uuidv4();
 
         const newUser: IUser = {
             id: userInfo.id || undefined,
             name: userInfo.name,
             email: userInfo.email,
             password_hash: await bcrypt.hash(userInfo.password_hash, saltRounds),
-            verificationToken: verificationToken,
-            isVerified: false,
+            // verificationToken: verificationToken,
+            isVerified: true,
 
             personalSubscription: {
                 status: 'inactive',
@@ -99,11 +99,9 @@ export const signup = async (req: Request, res: Response) => {
         await User.create(newUser);
 
         try {
-            await sendVerificationEmail(newUser.email, verificationToken, newUser.name);
+            // await sendVerificationEmail(newUser.email, verificationToken, newUser.name);
         } catch(emailError) {
-            // Log the specific email error for debugging
             console.error("Verification email failed to send:", emailError);
-            // Delete the user so they can try to register again
             await User.deleteOne({ email: newUser.email });
             return res.status(500).json({ message: "Error sending verification email. Please check your credentials and try again." });
         }
