@@ -4,7 +4,7 @@ import { IUser } from '../interfaces/user';
 const userSchema = new Schema<IUser>({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
-  password_hash: { type: String, required: true },
+  password_hash: { type: String },
   refresh_tokens: [{ type: String }],
   isVerified: { type: Boolean, default: false },
   verificationToken: { type: String },

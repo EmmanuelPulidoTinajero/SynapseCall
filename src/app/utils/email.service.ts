@@ -12,12 +12,12 @@ const transporter = nodemailer.createTransport({
 });
 
 const compileTemplate = (templateName: string, data: any) => {
-    const filePath = path.join(__dirname, '../../views/emails', `${templateName}.handlebars`);
+    // Navigates from 'dist/src/app/utils' to 'dist/src/views/emails'
+    const filePath = path.join(__dirname, '..', '..', 'views', 'emails', `${templateName}.handlebars`);
     const source = fs.readFileSync(filePath, 'utf-8');
     const template = handlebars.compile(source);
     return template(data);
 };
-
 export const sendVerificationEmail = async (email: string, token: string, name: string) => {
     const url = `${process.env.FRONTEND_URL}/auth/verify-account/${token}`;
     const html = compileTemplate('verification', { name, url });

@@ -24,7 +24,6 @@ export const googleLogin = async (req: Request, res: Response) => {
                     googleId,
                     email,
                     name: name || email.split('@')[0],
-                    password_hash: "",
                     isVerified: true,
                 });
                 user = newUser.toObject();
@@ -102,9 +101,11 @@ export const signup = async (req: Request, res: Response) => {
         try {
             await sendVerificationEmail(newUser.email, verificationToken, newUser.name);
         } catch(emailError) {
+            // Log the specific email error for debugging
+            console.error("Verification email failed to send:", emailError);
+            // Delete the user so they can try to register again
             await User.deleteOne({ email: newUser.email });
-            console.error("Email sending failed:", emailError);
-            return res.status(500).json({ message: "Error sending verification email. Please try again." });
+            return res.status(500).json({ message: "Error sending verification email. Please check your credentials and try again." });
         }
 
         return res.status(201).json({ message: "User Created. Please check your email to verify account." });
@@ -128,6 +129,10 @@ export const login = async (req: Request, res: Response) => {
 
         if (!foundUser.isVerified) {
             return res.status(403).json({ message: "Account not verified. Please check your email." });
+        }
+
+        if (!foundUser.password_hash) {
+            return res.status(400).json({ message: "This account uses Google Sign-In. Please login with Google." });
         }
 
         const match = await bcrypt.compare(password_hash, (foundUser as any).password_hash);
