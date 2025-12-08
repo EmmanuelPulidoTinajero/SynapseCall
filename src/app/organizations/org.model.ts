@@ -3,7 +3,7 @@ import { IOrganization } from '../interfaces/org';
 
 const organizationSchema = new Schema<IOrganization>({
   name: { type: String, required: true },
-  domain: { type: String },
+  domain: { type: String, required: true, unique: true },
   ownerId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
   logoUrl: { type: String },
   members: [{ type: Schema.Types.ObjectId, ref: 'User' }],

@@ -10,6 +10,16 @@ const environment = process.env.PAYPAL_ENVIRONMENT === "live"
 
 const client = new paypal.core.PayPalHttpClient(environment);
 
+const buildDomain = (name: string) => {
+    const base = (name || "org")
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "");
+    const random = Math.random().toString(36).slice(2, 6);
+    return `${base || "org"}-${random}`;
+};
+
 export const createNewOrg = async (req: Request, res: Response) => {
     try {
         const userId = (req as any).user.id;
@@ -45,18 +55,37 @@ export const createNewOrg = async (req: Request, res: Response) => {
             logoUrl = file.location || file.key;
         }
 
-        const newOrg = await Organization.create({
-            name,
-            ownerId: userId,
-            logoUrl,
-            members: [userId],
-            subscription: {
-                status: 'active',
-                plan: 'organization_tier',
-                expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-                paypalSubscriptionId: orderId
+        let newOrg = null;
+        let domain = buildDomain(name);
+        for (let attempt = 0; attempt < 3; attempt++) {
+            try {
+                newOrg = await Organization.create({
+                    name,
+                    domain,
+                    ownerId: userId,
+                    logoUrl,
+                    members: [userId],
+                    subscription: {
+                        status: 'active',
+                        plan: 'organization_tier',
+                        expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+                        paypalSubscriptionId: orderId
+                    }
+                });
+                break;
+            } catch (err: any) {
+                const dupDomain = err?.code === 11000 && err?.keyPattern?.domain;
+                if (dupDomain && attempt < 2) {
+                    domain = buildDomain(name);
+                    continue;
+                }
+                throw err;
             }
-        });
+        }
+
+        if (!newOrg) {
+            return res.status(500).json({ message: "No se pudo crear la organización" });
+        }
 
         await User.findByIdAndUpdate(userId, { organizationId: newOrg._id });
 
@@ -113,9 +142,9 @@ export const getOrgById = async (req: Request, res: Response) => {
     try {
         const orgId = req.params.orgId;
         const org = await Organization.findById(orgId).populate('members', 'name email');
-        
+
         if (!org) return res.status(404).json({ message: "Organización no encontrada" });
-        
+
         return res.status(200).json(org);
     } catch (e) {
         return res.status(500).json({ message: "Error del servidor" });
