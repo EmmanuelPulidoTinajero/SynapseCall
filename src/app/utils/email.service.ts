@@ -11,15 +11,25 @@ const transporter = nodemailer.createTransport({
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS,
     },
-});
+    tls: {
+        ciphers: 'SSLv3',
+        rejectUnauthorized: false
+    },
+    family: 4,
+    logger: true,
+    debug: true
+} as any);
 
 const compileTemplate = (templateName: string, data: any) => {
-    // Navigates from 'dist/src/app/utils' to 'dist/src/views/emails'
-    const filePath = path.join(__dirname, '..', '..', 'views', 'emails', `${templateName}.handlebars`);
+    const filePath = path.join(__dirname, '../../views/emails', `${templateName}.handlebars`);
+
+    console.log("Looking for template at:", filePath);
+
     const source = fs.readFileSync(filePath, 'utf-8');
     const template = handlebars.compile(source);
     return template(data);
 };
+
 export const sendVerificationEmail = async (email: string, token: string, name: string) => {
     const url = `${process.env.FRONTEND_URL}/auth/verify-account/${token}`;
     const html = compileTemplate('verification', { name, url });
