@@ -6,13 +6,14 @@
     <title>{{meetingTitle}} - Synapse Call</title>
     <link rel="icon" href="data:,">
     <link rel="stylesheet" href="/static/styles/styles.css">
-    
+    <script src="/static/assets/meeting.js" defer></script>
     <script>
         window.MEETING_DATA = {
             meetingId: "{{meetingId}}",
             isHost: {{#if isHost}}true{{else}}false{{/if}},
             isPro: {{#if isPro}}true{{else}}false{{/if}},
-            iceServers: {{{iceServersJson}}}
+            iceServers: {{{iceServersJson}}},
+            userName: "{{userName}}"
         };
     </script>
 
@@ -23,11 +24,11 @@
 <body style="margin: 0; padding: 0;">
 
     <div class="meeting-container" style="display: flex; height: 100vh; overflow: hidden; background: #202124;">
-        
+
         <div class="main-area" style="flex: 1; display: flex; flex-direction: column; position: relative;">
-            
+
             <div class="top-bar" style="background: rgba(0,0,0,0.6); color: white; padding: 10px; display: flex; justify-content: space-between; align-items: center; position: absolute; top: 0; left: 0; right: 0; z-index: 10;">
-                
+
                 <div class="branding" style="display: flex; align-items: center; gap: 10px;">
                     {{#if orgLogo}}
                         <img src="{{orgLogo}}" alt="Org" style="height: 30px; border-radius: 4px;">
@@ -37,6 +38,26 @@
                         <span style="margin: 0 5px;">|</span>
                     {{/if}}
                     <span>{{meetingTitle}}</span>
+                    <span
+                        id="meeting-id-copy"
+                        style="margin-left: 10px; padding: 2px 5px; background: #555; color: #fff; font-size: 0.75rem; cursor: pointer;"
+                        title="Clic para copiar">
+                        ID: {{meetingId}}
+                    </span>
+                    <script>
+                        document.addEventListener("DOMContentLoaded", () => {
+                            const elid = document.getElementById("meeting-id-copy");
+                            if (!elid) return;
+
+                            elid.addEventListener("click", () => {
+                                navigator.clipboard.writeText("{{meetingId}}")
+                                    .then(() => {
+                                        elid.innerText = "Copiado";
+                                        setTimeout(() => elid.innerText = "ID: {{meetingId}}", 1000);
+                                    })
+                            });
+                        });
+                    </script>
                 </div>
 
                 <div id="active-agenda-display" style="display: none; background: #333; padding: 5px 15px; border-radius: 20px; border: 1px solid #555;">
@@ -53,7 +74,7 @@
             </div>
 
             <div id="video-grid" style="flex: 1; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 10px; padding: 60px 10px 10px 10px; overflow-y: auto;"></div>
-            
+
             <div class="bottom-controls" style="background: #333; padding: 15px; display: flex; justify-content: center; gap: 20px;">
                 <button id="mute-btn" class="control-btn">🎙️ Mute</button>
                 <button id="video-btn" class="control-btn">📹 Video</button>
@@ -62,7 +83,7 @@
         </div>
 
         <div id="side-panel" style="width: 350px; background: white; border-left: 1px solid #ccc; display: flex; flex-direction: column;">
-            
+
             <div class="tabs" style="display: flex; border-bottom: 1px solid #ddd;">
                 <button id="tab-btn-chat" class="tab-btn active" style="flex: 1; padding: 10px; border: none; background: #f0f0f0; cursor: pointer;">Chat</button>
                 {{#if isPro}}
@@ -76,7 +97,7 @@
                     <input id="chat-input" type="text" placeholder="Escribe..." style="flex: 1; padding: 8px;">
                     <button type="submit" style="margin-left: 5px; padding: 5px 10px;">Enviar</button>
                 </form>
-                
+
                 <form id="file-upload-form" action="/meetings/{{meetingId}}/uploadFiles" method="post" enctype="multipart/form-data" style="padding: 5px 10px; background: #f9f9f9;">
                     <input type="file" name="file" id="file-input" style="font-size: 0.8rem;">
                     <button type="submit" id="upload-button" style="font-size: 0.8rem;">Subir</button>
@@ -86,7 +107,7 @@
             {{#if isPro}}
             <div id="agenda-tab" class="tab-content" style="display: none; flex: 1; flex-direction: column; padding: 10px; overflow-y: auto;">
                 <h3>Agenda de Reunión</h3>
-                
+
                 <div id="agenda-list" style="flex: 1; overflow-y: auto; margin-bottom: 10px;">
                     <p style="color: #999; text-align: center;">Cargando agenda...</p>
                 </div>
@@ -98,7 +119,7 @@
                         <button id="btn-start-agenda" style="flex: 1; background: #28a745; color: white; border: none; padding: 8px; border-radius: 4px; cursor: pointer;">▶ Iniciar</button>
                         <button id="btn-next-item" style="flex: 1; background: #007bff; color: white; border: none; padding: 8px; border-radius: 4px; cursor: pointer;">⏭ Siguiente</button>
                     </div>
-                    
+
                     <form id="add-agenda-form" style="display: flex; gap: 5px; flex-wrap: wrap;">
                         <input type="text" id="new-topic" placeholder="Nuevo tema" style="flex: 2; padding: 5px;">
                         <input type="number" id="new-duration" placeholder="Min" style="width: 50px; padding: 5px;">

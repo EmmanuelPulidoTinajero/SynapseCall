@@ -67,6 +67,9 @@ export const enterMeeting = async (req: Request, res: Response) => {
             }
         }
         const isHost = currentUser ? currentUser.id === meeting.initiator_id : false;
+
+        const userName = (currentUser && (currentUser.name || currentUser.userName || currentUser.email)) || "Invitado";
+
         const s3Bucket = s3Storage;
         let keys: string[] = [];
         let links: any[] = [];
@@ -92,7 +95,8 @@ export const enterMeeting = async (req: Request, res: Response) => {
             orgLogo: orgData?.logo,
             s3Bucket: s3Bucket,
             downloadLinksJson: JSON.stringify(links),
-            iceServersJson: JSON.stringify(iceServers)
+            iceServersJson: JSON.stringify(iceServers),
+            userName: userName
         });
 
     } catch (error) {

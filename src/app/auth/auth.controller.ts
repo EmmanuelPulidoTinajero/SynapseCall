@@ -29,7 +29,7 @@ export const signup = async (req: Request, res: Response) => {
             password_hash: await bcrypt.hash(userInfo.password_hash, saltRounds),
             verificationToken: verificationToken,
             isVerified: false,
-            
+
             personalSubscription: {
                 status: 'inactive',
                 plan: 'free'
@@ -155,7 +155,7 @@ export const refreshToken = async (req: Request, res: Response) => {
 
 export const logout = async (req: Request, res: Response) => {
     const cookies = req.signedCookies;
-    
+
     if (!cookies?.refresh) return res.redirect('/');
 
     const refreshToken = cookies.refresh;
@@ -168,9 +168,9 @@ export const logout = async (req: Request, res: Response) => {
 
     res.clearCookie('refresh', { httpOnly: true, signed: true });
     res.clearCookie('accessToken'); // Limpiamos también el access token
-    
 
-    return res.redirect('/'); 
+
+    return res.redirect('/');
 }
 
 export const verifyAccount = async (req: Request, res: Response) => {
@@ -260,25 +260,25 @@ export const renderLandingOrHome = async (req: Request, res: Response) => {
 
 
     if (!userPayload) {
-        return res.render('landing', { 
-            layout: 'main', 
-            title: 'Bienvenido a Synapse Call' 
+        return res.render('landing', {
+            layout: 'main',
+            title: 'Bienvenido a Synapse Call'
         });
     }
 
-    
+
     try {
-        
+
         const user = await User.findById(userPayload.id).populate('organizationId').exec();
 
         if (!user) {
-            
+
             return res.clearCookie('accessToken').clearCookie('refresh').redirect('/');
         }
 
         const organization = user.organizationId as any;
-        
-        
+
+
         const viewData = {
             user: {
                 name: user.name,
@@ -286,16 +286,17 @@ export const renderLandingOrHome = async (req: Request, res: Response) => {
                 isPro: user.personalSubscription.status === 'active' || (organization?.subscription?.status === 'active')
             },
             organization: organization ? {
+                id: organization._id?.toString() || organization.id,
                 name: organization.name,
                 logoUrl: organization.logoUrl,
                 isOwner: organization.ownerId.toString() === user.id
             } : null
         };
 
-        return res.render('home', { 
-            layout: 'main', 
+        return res.render('home', {
+            layout: 'main',
             ...viewData,
-            paypalClientId: process.env.PAYPAL_CLIENT_ID 
+            paypalClientId: process.env.PAYPAL_CLIENT_ID
         });
 
     } catch (error) {
