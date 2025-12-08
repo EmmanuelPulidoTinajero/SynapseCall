@@ -5,8 +5,8 @@ import handlebars from 'handlebars';
 
 const transporter = nodemailer.createTransport({
     host: 'smtp.gmail.com',
-    port: 465,
-    secure: true,
+    port: 587,              // Standard port for cloud apps
+    secure: false,          // False for 587 (it upgrades to secure later)
     auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS,
@@ -15,8 +15,8 @@ const transporter = nodemailer.createTransport({
         ciphers: 'SSLv3',
         rejectUnauthorized: false
     },
-    family: 4,
-    logger: true,
+    family: 4,    // Keep this to force IPv4
+    logger: true, // Keep logging enabled to see the handshake
     debug: true
 } as any);
 
