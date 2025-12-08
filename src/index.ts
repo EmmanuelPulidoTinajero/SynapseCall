@@ -22,8 +22,8 @@ const port = process.env.PORT || 3000;
 const app = express();
 app.engine("handlebars", engine());
 app.set("view engine", "handlebars");
-app.set("views", path.join(__dirname, "views")); 
-app.use("/static", static_(path.join(__dirname, "..", "..", "public"))); 
+app.set("views", path.join(__dirname, "..", "src", "views"));
+app.use("/static", static_(path.join(__dirname, "..", "public")));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser(process.env.COOKIE_SECRET));
@@ -124,7 +124,7 @@ dbConnect().then(() => {
 
             // 3. Detener/Pausar Agenda
             socket.on("agenda-stop", async (data: { currentItemId: string }) => {
-               await AgendaItem.findByIdAndUpdate(data.currentItemId, { status: 'completed' }); 
+               await AgendaItem.findByIdAndUpdate(data.currentItemId, { status: 'completed' });
                io.to(meetingId).emit("agenda-stopped");
             });
 
