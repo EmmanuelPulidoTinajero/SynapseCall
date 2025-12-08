@@ -99,7 +99,13 @@ export const signup = async (req: Request, res: Response) => {
 
         await User.create(newUser);
 
-        await sendVerificationEmail(newUser.email, verificationToken, newUser.name);
+        try {
+            await sendVerificationEmail(newUser.email, verificationToken, newUser.name);
+        } catch(emailError) {
+            await User.deleteOne({ email: newUser.email });
+            console.error("Email sending failed:", emailError);
+            return res.status(500).json({ message: "Error sending verification email. Please try again." });
+        }
 
         return res.status(201).json({ message: "User Created. Please check your email to verify account." });
     } catch (error) {
