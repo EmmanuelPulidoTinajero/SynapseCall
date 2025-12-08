@@ -2,8 +2,8 @@
     "compilerOptions": {
         "target": "esnext",
         "outDir": "dist",
-        "module": "nodenext",
-        "moduleResolution": "nodenext",
+        "module": "commonjs",
+        "moduleResolution": "node",
         "resolveJsonModule": true,
         "esModuleInterop": true,
         "strict": true,

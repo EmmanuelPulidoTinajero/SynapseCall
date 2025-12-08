@@ -22,8 +22,8 @@ const port = process.env.PORT || 3000;
 const app = express();
 app.engine("handlebars", engine());
 app.set("view engine", "handlebars");
-app.set("views", "./src/views")
-app.use("/static", static_(path.join(__dirname, "..", "public")));
+app.set("views", path.join(__dirname, "views")); 
+app.use("/static", static_(path.join(__dirname, "..", "..", "public"))); 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser(process.env.COOKIE_SECRET));
