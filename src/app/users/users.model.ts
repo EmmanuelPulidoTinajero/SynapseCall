@@ -10,17 +10,18 @@ const userSchema = new Schema<IUser>({
   verificationToken: { type: String },
   resetPasswordToken: { type: String },
   resetPasswordExpires: { type: Date },
+  googleId: { type: String },
   organizationId: { type: Schema.Types.ObjectId, ref: 'Organization' },
   personalSubscription: {
-    status: { 
-        type: String, 
-        enum: ['active', 'inactive', 'past_due'], 
-        default: 'inactive' 
+    status: {
+        type: String,
+        enum: ['active', 'inactive', 'past_due'],
+        default: 'inactive'
     },
-    plan: { 
-        type: String, 
-        enum: ['individual_pro', 'free'], 
-        default: 'free' 
+    plan: {
+        type: String,
+        enum: ['individual_pro', 'free'],
+        default: 'free'
     },
     expiresAt: { type: Date },
     paypalSubscriptionId: { type: String }

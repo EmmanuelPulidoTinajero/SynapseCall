@@ -13,9 +13,11 @@
             <button type="submit" class="btn-primary">Entrar</button>
         </form>
 
-        <button onclick="window.location.href='/auth/google'" class="google-btn">
-            Sign in with Google
-        </button>
+        <div id="g_id_onload"
+             data-client_id="{{googleClientId}}"
+             data-callback="handleCredentialResponse">
+        </div>
+        <div class="g_id_signin" data-type="standard"></div>
 
         <div class="auth-links">
             <a href="/auth/forgot-password">¿Olvidaste tu contraseña?</a>
@@ -41,7 +43,7 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
 
         if (res.ok) {
             localStorage.setItem('accessToken', data.accessToken);
-            window.location.href = '/'; 
+            window.location.href = '/';
         } else {
             alert(data.message || 'Error al iniciar sesión');
         }
@@ -50,4 +52,28 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
         alert('Error de conexión');
     }
 });
+
+function handleCredentialResponse(response) {
+  // response.credential is the JWT token from Google
+  const decoded = JSON.parse(atob(response.credential.split('.')[1]));
+
+  fetch('/auth/google', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      googleId: decoded.sub,
+      email: decoded.email,
+      name: decoded.name
+    })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.accessToken) {
+      localStorage.setItem('accessToken', data.accessToken);
+      window.location.href = '/';
+    }
+  })
+  .catch(err => alert('Google login failed: ' + err.message));
+}
 </script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>

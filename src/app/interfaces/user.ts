@@ -10,6 +10,7 @@ export interface IUser {
     verificationToken?: string;
     resetPasswordToken?: string;
     resetPasswordExpires?: Date;
+    googleId?: string;
     organizationId?: Types.ObjectId;
     personalSubscription: {
         status: "active" | "inactive" | "past_due";

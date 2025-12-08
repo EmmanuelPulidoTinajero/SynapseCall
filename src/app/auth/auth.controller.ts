@@ -6,6 +6,67 @@ import { IUser } from '../interfaces/user';
 import { v4 as uuidv4 } from 'uuid';
 import { sendVerificationEmail, sendPasswordResetEmail } from '../utils/email.service';
 
+export const googleLogin = async (req: Request, res: Response) => {
+    try {
+        const { googleId, email, name } = req.body;
+
+        if (!googleId || !email) {
+            return res.status(400).json({ message: "googleId and email are required" });
+        }
+
+        let user = await User.findOne({ googleId }).lean();
+        if (!user) {
+            user = await User.findOne({ email }).lean();
+            if (user) {
+                await User.updateOne({ _id: user._id }, { googleId });
+            } else {
+                const newUser = await User.create({
+                    googleId,
+                    email,
+                    name: name || email.split('@')[0],
+                    password_hash: "",
+                    isVerified: true,
+                });
+                user = newUser.toObject();
+            }
+        }
+
+        const accessToken = jwt.sign(
+            { id: user._id, email: user.email, name: user.name },
+            process.env.ACCESS_TOKEN_SECRET as jwt.Secret,
+            { expiresIn: '15m' }
+        );
+
+        const refreshToken = jwt.sign(
+            { id: user._id },
+            process.env.REFRESH_TOKEN_SECRET as jwt.Secret,
+            { expiresIn: '7d' }
+        );
+
+        await User.updateOne({ _id: user._id }, { $push: { refresh_tokens: refreshToken } });
+
+        res.cookie('refresh', refreshToken, {
+            httpOnly: true,
+            signed: true,
+            maxAge: 7 * 24 * 60 * 60 * 1000
+        });
+
+        res.cookie('accessToken', accessToken, {
+            httpOnly: true,
+            maxAge: 15 * 60 * 1000
+        });
+
+        return res.status(200).json({
+            message: "Google login successful",
+            accessToken,
+            user: { id: user._id, email: user.email, name: user.name }
+        });
+    } catch (error) {
+        console.error("Google login error:", error);
+        return res.status(500).json({ message: "Server error during Google login" });
+    }
+};
+
 export const signup = async (req: Request, res: Response) => {
     try {
         const userInfo = req.body;
@@ -244,7 +305,10 @@ export const resetPassword = async (req: Request, res: Response) => {
     }
 }
 export const renderLogin = (req: Request, res: Response) => {
-    res.render('login');
+    res.render('login', {
+        layout: 'main',
+        googleClientId: process.env.GOOGLE_CLIENT_ID
+    });
 };
 
 export const renderSignup = (req: Request, res: Response) => {
