@@ -31,7 +31,7 @@
     "test": "jest --config src/tests/jest.config.js --runInBand",
     "clean": "rimraf dist",
     "build": "npm run clean && tsc && npm run copy-assets",
-    "copy-assets": "copyfiles -u 1 src/views/**/* src/views/**/**/* public/**/* dist",
+    "copy-assets": "copyfiles src/views/**/* src/views/**/**/* public/**/* dist",
     "start": "node dist/src/index.js",
     "dev": "nodemon src/index.ts",
     "scripts": "tsc",
