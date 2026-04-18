@@ -226,7 +226,7 @@ export const refreshToken = async (req: Request, res: Response) => {
 export const logout = async (req: Request, res: Response) => {
     const cookies = req.signedCookies;
 
-    if (!cookies?.refresh) return res.redirect('/');
+    if (!cookies?.refresh) return res.sendStatus(204);
 
     const refreshToken = cookies.refresh;
     const foundUser = await User.findOne({ refresh_tokens: refreshToken }).exec();
@@ -237,28 +237,32 @@ export const logout = async (req: Request, res: Response) => {
     }
 
     res.clearCookie('refresh', { httpOnly: true, signed: true });
-    res.clearCookie('accessToken'); // Limpiamos también el access token
+    res.clearCookie('accessToken');
 
-
-    return res.redirect('/');
+    return res.status(200).json({ message: 'Logged out successfully' });
 }
 
 export const verifyAccount = async (req: Request, res: Response) => {
     try {
         const { token } = req.params;
+
+        if (!token) return res.status(400).json({ message: "Token is required" });
+
         const user = await User.findOne({ verificationToken: token });
 
         if (!user) {
-            return res.status(400).json({ message: "Invalid or expired token" });
+            return res.status(400).json({ message: "El enlace es inválido o ha expirado." });
         }
 
         user.isVerified = true;
         user.verificationToken = undefined;
         await user.save();
 
-        return res.send("<h1>Cuenta verificada exitosamente! Ya puedes iniciar sesión.</h1>");
+        return res.status(200).json({
+            message: "¡Cuenta verificada exitosamente! Ya puedes iniciar sesión."
+        });
     } catch (error) {
-        return res.status(500).send("<h1>Server error</h1>");
+        return res.status(500).json({ message: "Error interno del servidor." });
     }
 }
 

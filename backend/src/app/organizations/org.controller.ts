@@ -3,6 +3,8 @@ import Organization from "./org.model";
 import User from "../users/users.model";
 import { Types } from "mongoose";
 import paypal from "@paypal/checkout-server-sdk";
+import { AuthRequest } from "../interfaces/custom-request";
+import { Auth } from "mongodb";
 
 const environment = process.env.PAYPAL_ENVIRONMENT === "live"
     ? new paypal.core.LiveEnvironment(process.env.PAYPAL_CLIENT_ID!, process.env.PAYPAL_CLIENT_SECRET!)
@@ -20,11 +22,11 @@ const buildDomain = (name: string) => {
     return `${base || "org"}-${random}`;
 };
 
-export const createNewOrg = async (req: Request, res: Response) => {
+export const createNewOrg = async (req: AuthRequest, res: Response) => {
     try {
-        const userId = (req as any).user.id;
+        const userId = req.user?.id;
         const { name, orderId } = req.body;
-        const file = (req as any).file;
+        const file = req.file;
 
         if (!name || !orderId) {
             return res.status(400).json({ message: "Nombre y OrderID de pago requeridos." });
@@ -97,9 +99,9 @@ export const createNewOrg = async (req: Request, res: Response) => {
     }
 }
 
-export const addMemberToOrg = async (req: Request, res: Response) => {
+export const addMemberToOrg = async (req: AuthRequest, res: Response) => {
     try {
-        const userId = (req as any).user.id;
+        const userId = req.user?.id;
         const { email } = req.body;
         const { orgId } = req.params;
 
@@ -151,10 +153,10 @@ export const getOrgById = async (req: Request, res: Response) => {
     }
 }
 
-export const updateOrgById = async (req: Request, res: Response) => {
+export const updateOrgById = async (req: AuthRequest, res: Response) => {
     try {
         const orgId = req.params.orgId;
-        const userId = (req as any).user.id;
+        const userId = req.user?.id;
         const updateInfo = req.body;
 
         const org = await Organization.findById(orgId);
@@ -164,21 +166,31 @@ export const updateOrgById = async (req: Request, res: Response) => {
             return res.status(403).json({ message: "No tienes permiso para editar esta organización" });
         }
 
-        if (!updateInfo.name) {
-            return res.status(400).json({ message: "Información faltante" });
+        const allowedUpdates: any = {};
+
+        if (updateInfo.name) allowedUpdates.name = updateInfo.name;
+        if (updateInfo.domain) allowedUpdates.domain = updateInfo.domain;
+
+        if (Object.keys(allowedUpdates).length === 0) {
+            return res.status(400).json({ message: "No se enviaron datos válidos para actualizar" });
         }
 
-        const updated = await Organization.findByIdAndUpdate(orgId, { name: updateInfo.name }, { new: true });
+        const updated = await Organization.findByIdAndUpdate(
+            orgId,
+            allowedUpdates,
+            { new: true }
+        );
+
         return res.status(200).json({ message: "Organización actualizada", organization: updated });
     } catch (error) {
         res.status(500).json({ message: "Error del servidor" });
     }
 }
 
-export const deleteOrgById = async (req: Request, res: Response) => {
+export const deleteOrgById = async (req: AuthRequest, res: Response) => {
     try {
         const orgId = req.params.orgId;
-        const userId = (req as any).user.id;
+        const userId = req.user?.id;
 
         const org = await Organization.findById(orgId);
         if (!org) return res.status(404).json({ message: "Organización no encontrada" });

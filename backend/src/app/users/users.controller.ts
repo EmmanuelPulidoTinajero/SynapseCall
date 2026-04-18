@@ -2,10 +2,12 @@ import { Request, Response } from "express";
 import User from "./users.model";
 import { IUser } from "../interfaces/user";
 import { Types } from "mongoose";
+import { Auth } from "mongodb";
+import { AuthRequest } from "../interfaces/custom-request";
 
-export const getPersonalUser = async (req: Request, res: Response) => {
+export const getPersonalUser = async (req: AuthRequest, res: Response) => {
     try {
-        const userId = (req as any).user?.id;//sino sale error
+        const userId = req.user?.id;//sino sale error
         if (!userId) {
             return res.status(401).json({ message: "Unauthorized" });
         }
@@ -20,9 +22,9 @@ export const getPersonalUser = async (req: Request, res: Response) => {
     //res.status(200).json({ message: "Getting personal profile." });
 }
 
-export const updatePersonalUser = async (req: Request, res: Response) => {
+export const updatePersonalUser = async (req: AuthRequest, res: Response) => {
     try {
-        const userId = (req as any).user?.id;
+        const userId = req.user?.id;
         if (!userId) {
             return res.status(401).json({ message: "Unauthorized" });
         }
@@ -60,7 +62,7 @@ export const deleteUserById = async (req: Request, res: Response) => {
         const { userId } = req.params;
         if (!Types.ObjectId.isValid(userId)){
             return res.status(400).json({ message: "Invalid user id" });
-        } 
+        }
         const deleted = await User.findByIdAndDelete(userId);
         if(!deleted) {
             return res.status(404).json({ message: "User no found"});
