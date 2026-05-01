@@ -17,9 +17,11 @@
             <button type="submit" class="btn-primary">Registrarse</button>
         </form>
 
-        <button onclick="window.location.href='/auth/google'" class="google-btn">
-            Sign up with Google
-        </button>
+        <div id="g_id_onload"
+             data-client_id="{{googleClientId}}"
+             data-callback="handleCredentialResponse">
+        </div>
+        <div class="g_id_signin" data-type="standard"></div>
 
         <div class="auth-links">
             <a href="/auth/login">¿Ya tienes cuenta? Inicia sesión</a>
@@ -54,4 +56,25 @@ document.getElementById('signup-form').addEventListener('submit', async (e) => {
         alert('Error de conexión');
     }
 });
+
+function handleCredentialResponse(response) {
+    fetch('/auth/google', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            credential: response.credential
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.accessToken) {
+            localStorage.setItem('accessToken', data.accessToken);
+            window.location.href = '/';
+        } else {
+            alert(data.message || 'Google signup failed');
+        }
+    })
+    .catch(err => alert('Google signup failed: ' + err.message));
+}
 </script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>

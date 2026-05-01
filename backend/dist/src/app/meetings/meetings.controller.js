@@ -66,6 +66,7 @@ const enterMeeting = async (req, res) => {
             }
         }
         const isHost = currentUser ? currentUser.id === meeting.initiator_id : false;
+        const userName = (currentUser && (currentUser.name || currentUser.userName || currentUser.email)) || "Invitado";
         const s3Bucket = upload_1.s3Storage;
         let keys = [];
         let links = [];
@@ -89,7 +90,8 @@ const enterMeeting = async (req, res) => {
             orgLogo: orgData?.logo,
             s3Bucket: s3Bucket,
             downloadLinksJson: JSON.stringify(links),
-            iceServersJson: JSON.stringify(iceServers)
+            iceServersJson: JSON.stringify(iceServers),
+            userName: userName
         });
     }
     catch (error) {

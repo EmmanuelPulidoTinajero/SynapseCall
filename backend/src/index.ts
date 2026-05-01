@@ -36,6 +36,9 @@ app.get("/", tryAuthentication, renderLandingOrHome);
 
 app.use(router);
 
+import { initializeMessaging } from "./messaging.init";
+initializeMessaging(router);
+
 const swaggerDocs = swaggerJsDoc(swaggerConfig);
 app.use("/swagger", serve, setup(swaggerDocs))
 

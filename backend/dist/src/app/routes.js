@@ -14,4 +14,5 @@ router.use("/auth", auth_routes_1.default);
 router.use("/users", users_routes_1.default);
 router.use("/meetings", meetings_routes_1.default);
 router.use("/organizations", org_routes_1.default);
+router.use("/orgs", org_routes_1.default);
 exports.default = router;

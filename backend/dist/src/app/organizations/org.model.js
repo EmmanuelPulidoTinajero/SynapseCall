@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = require("mongoose");
 const organizationSchema = new mongoose_1.Schema({
     name: { type: String, required: true },
-    domain: { type: String },
+    domain: { type: String, required: true, unique: true },
     ownerId: { type: mongoose_1.Schema.Types.ObjectId, ref: 'User', required: true },
     logoUrl: { type: String },
     members: [{ type: mongoose_1.Schema.Types.ObjectId, ref: 'User' }],

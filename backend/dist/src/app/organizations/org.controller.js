@@ -11,9 +11,18 @@ const environment = process.env.PAYPAL_ENVIRONMENT === "live"
     ? new checkout_server_sdk_1.default.core.LiveEnvironment(process.env.PAYPAL_CLIENT_ID, process.env.PAYPAL_CLIENT_SECRET)
     : new checkout_server_sdk_1.default.core.SandboxEnvironment(process.env.PAYPAL_CLIENT_ID, process.env.PAYPAL_CLIENT_SECRET);
 const client = new checkout_server_sdk_1.default.core.PayPalHttpClient(environment);
+const buildDomain = (name) => {
+    const base = (name || "org")
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "");
+    const random = Math.random().toString(36).slice(2, 6);
+    return `${base || "org"}-${random}`;
+};
 const createNewOrg = async (req, res) => {
     try {
-        const userId = req.user.id;
+        const userId = req.user?.id;
         const { name, orderId } = req.body;
         const file = req.file;
         if (!name || !orderId) {
@@ -38,18 +47,37 @@ const createNewOrg = async (req, res) => {
         if (file) {
             logoUrl = file.location || file.key;
         }
-        const newOrg = await org_model_1.default.create({
-            name,
-            ownerId: userId,
-            logoUrl,
-            members: [userId],
-            subscription: {
-                status: 'active',
-                plan: 'organization_tier',
-                expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-                paypalSubscriptionId: orderId
+        let newOrg = null;
+        let domain = buildDomain(name);
+        for (let attempt = 0; attempt < 3; attempt++) {
+            try {
+                newOrg = await org_model_1.default.create({
+                    name,
+                    domain,
+                    ownerId: userId,
+                    logoUrl,
+                    members: [userId],
+                    subscription: {
+                        status: 'active',
+                        plan: 'organization_tier',
+                        expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+                        paypalSubscriptionId: orderId
+                    }
+                });
+                break;
             }
-        });
+            catch (err) {
+                const dupDomain = err?.code === 11000 && err?.keyPattern?.domain;
+                if (dupDomain && attempt < 2) {
+                    domain = buildDomain(name);
+                    continue;
+                }
+                throw err;
+            }
+        }
+        if (!newOrg) {
+            return res.status(500).json({ message: "No se pudo crear la organización" });
+        }
         await users_model_1.default.findByIdAndUpdate(userId, { organizationId: newOrg._id });
         return res.status(201).json({ message: "Organización creada y suscripción activa", organization: newOrg });
     }
@@ -61,7 +89,7 @@ const createNewOrg = async (req, res) => {
 exports.createNewOrg = createNewOrg;
 const addMemberToOrg = async (req, res) => {
     try {
-        const userId = req.user.id;
+        const userId = req.user?.id;
         const { email } = req.body;
         const { orgId } = req.params;
         const org = await org_model_1.default.findById(orgId);
@@ -108,7 +136,7 @@ exports.getOrgById = getOrgById;
 const updateOrgById = async (req, res) => {
     try {
         const orgId = req.params.orgId;
-        const userId = req.user.id;
+        const userId = req.user?.id;
         const updateInfo = req.body;
         const org = await org_model_1.default.findById(orgId);
         if (!org)
@@ -116,10 +144,15 @@ const updateOrgById = async (req, res) => {
         if (org.ownerId.toString() !== userId) {
             return res.status(403).json({ message: "No tienes permiso para editar esta organización" });
         }
-        if (!updateInfo.name) {
-            return res.status(400).json({ message: "Información faltante" });
+        const allowedUpdates = {};
+        if (updateInfo.name)
+            allowedUpdates.name = updateInfo.name;
+        if (updateInfo.domain)
+            allowedUpdates.domain = updateInfo.domain;
+        if (Object.keys(allowedUpdates).length === 0) {
+            return res.status(400).json({ message: "No se enviaron datos válidos para actualizar" });
         }
-        const updated = await org_model_1.default.findByIdAndUpdate(orgId, { name: updateInfo.name }, { new: true });
+        const updated = await org_model_1.default.findByIdAndUpdate(orgId, allowedUpdates, { new: true });
         return res.status(200).json({ message: "Organización actualizada", organization: updated });
     }
     catch (error) {
@@ -130,7 +163,7 @@ exports.updateOrgById = updateOrgById;
 const deleteOrgById = async (req, res) => {
     try {
         const orgId = req.params.orgId;
-        const userId = req.user.id;
+        const userId = req.user?.id;
         const org = await org_model_1.default.findById(orgId);
         if (!org)
             return res.status(404).json({ message: "Organización no encontrada" });

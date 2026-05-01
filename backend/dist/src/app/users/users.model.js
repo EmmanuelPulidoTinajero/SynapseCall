@@ -4,12 +4,13 @@ const mongoose_1 = require("mongoose");
 const userSchema = new mongoose_1.Schema({
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
-    password_hash: { type: String, required: true },
+    password_hash: { type: String },
     refresh_tokens: [{ type: String }],
-    isVerified: { type: Boolean, default: false },
+    isVerified: { type: Boolean, default: true },
     verificationToken: { type: String },
     resetPasswordToken: { type: String },
     resetPasswordExpires: { type: Date },
+    googleId: { type: String },
     organizationId: { type: mongoose_1.Schema.Types.ObjectId, ref: 'Organization' },
     personalSubscription: {
         status: {

@@ -5,6 +5,7 @@ const auth_controller_1 = require("./auth.controller");
 const router = (0, express_1.Router)();
 router.get("/login", auth_controller_1.renderLogin);
 router.post("/login", auth_controller_1.login);
+router.post("/google", auth_controller_1.googleLogin);
 router.get("/signup", auth_controller_1.renderSignup);
 router.post("/signup", auth_controller_1.signup);
 router.get("/forgot-password", auth_controller_1.renderForgotPassword);

@@ -147,7 +147,7 @@ export const getOrgById = async (req: Request, res: Response) => {
 
         if (!org) return res.status(404).json({ message: "Organización no encontrada" });
 
-        return res.status(200).json(org);
+        return res.status(200).json({ organization: org });
     } catch (e) {
         return res.status(500).json({ message: "Error del servidor" });
     }

@@ -54,23 +54,20 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
 });
 
 function handleCredentialResponse(response) {
-  // response.credential is the JWT token from Google
-  const decoded = JSON.parse(atob(response.credential.split('.')[1]));
-
   fetch('/auth/google', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      googleId: decoded.sub,
-      email: decoded.email,
-      name: decoded.name
+            credential: response.credential
     })
   })
   .then(res => res.json())
   .then(data => {
-    if (data.accessToken) {
+        if (data.accessToken) {
       localStorage.setItem('accessToken', data.accessToken);
       window.location.href = '/';
+        } else {
+            alert(data.message || 'Google login failed');
     }
   })
   .catch(err => alert('Google login failed: ' + err.message));

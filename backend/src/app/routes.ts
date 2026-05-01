@@ -10,5 +10,6 @@ router.use("/auth", authRoutes);
 router.use("/users", usersRoutes);
 router.use("/meetings", meetingsRoutes);
 router.use("/organizations", OrganizationRoutes);
+router.use("/orgs", OrganizationRoutes);
 
 export default router;

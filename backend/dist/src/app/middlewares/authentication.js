@@ -23,6 +23,8 @@ const authentication = async (req, res, next) => {
         }
     }
     catch (error) {
+        console.log("=== ERROR DE JWT ===");
+        console.log(error.message);
         if (req.accepts('json')) {
             return res.status(401).json({ message: "Invalid token" });
         }

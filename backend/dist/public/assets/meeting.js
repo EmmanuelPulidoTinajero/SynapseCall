@@ -1,4 +1,4 @@
-const { meetingId: MEETING_ID, isHost: IS_HOST, isPro: IS_PRO, iceServers: ICE_SERVERS } = window.MEETING_DATA || {};
+const { meetingId: MEETING_ID, isHost: IS_HOST, isPro: IS_PRO, iceServers: ICE_SERVERS, userName: USER_NAME } = window.MEETING_DATA || {};
 
 if (!MEETING_ID) {
     console.error("Critical: MEETING_DATA not found.");
@@ -11,7 +11,7 @@ let myPeer;
 const myVideo = document.createElement("video");
 myVideo.muted = true;
 const peers = {};
-const userName = "User" + Math.floor(Math.random() * 1000);
+const userName = USER_NAME || ("User" + Math.floor(Math.random() * 1000));
 
 const peerConfig = {
     host: window.location.hostname,

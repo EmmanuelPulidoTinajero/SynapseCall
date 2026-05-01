@@ -51,18 +51,25 @@ const socket_io_1 = require("socket.io");
 const peer_1 = require("peer");
 const auth_controller_1 = require("./app/auth/auth.controller");
 const authentication_1 = require("./app/middlewares/authentication");
-const agenda_item_model_1 = __importDefault(require("./app/meetings/agenda-item.model")); // Importar Modelo
+const agenda_item_model_1 = __importDefault(require("./app/meetings/agenda-item.model"));
+const cors_1 = __importDefault(require("cors"));
 const port = process.env.PORT || 3000;
 const app = (0, express_1.default)();
 app.engine("handlebars", (0, express_handlebars_1.engine)());
 app.set("view engine", "handlebars");
-app.set("views", path_1.default.join(__dirname, "views"));
-app.use("/static", (0, express_1.static)(path_1.default.join(__dirname, "..", "..", "public")));
+app.set("views", path_1.default.join(__dirname, "..", "src", "views"));
+app.use("/static", (0, express_1.static)(path_1.default.join(__dirname, "..", "public")));
 app.use(express_1.default.json());
 app.use(express_1.default.urlencoded({ extended: true }));
 app.use((0, cookie_parser_1.default)(process.env.COOKIE_SECRET));
+app.use((0, cors_1.default)({
+    origin: 'http://localhost:4200',
+    credentials: true
+}));
 app.get("/", authentication_1.tryAuthentication, auth_controller_1.renderLandingOrHome);
 app.use(routes_1.default);
+const messaging_init_1 = require("./messaging.init");
+(0, messaging_init_1.initializeMessaging)(routes_1.default);
 const swaggerDocs = (0, swagger_jsdoc_1.default)(swagger_config_1.default);
 app.use("/swagger", swagger_ui_express_1.serve, (0, swagger_ui_express_1.setup)(swaggerDocs));
 (0, database_1.dbConnect)().then(() => {

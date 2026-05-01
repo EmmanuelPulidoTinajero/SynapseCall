@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const users_controller_1 = require("./users.controller");
+const authentication_1 = require("../middlewares/authentication");
 const router = (0, express_1.Router)();
 /**
  * @swagger
@@ -56,7 +57,7 @@ const router = (0, express_1.Router)();
  *       '404':
  *         description: User not found
  */
-router.get("/me", users_controller_1.getPersonalUser);
+router.get("/me", authentication_1.authentication, users_controller_1.getPersonalUser);
 /**
  * @swagger
  * /users/me:
@@ -86,7 +87,7 @@ router.get("/me", users_controller_1.getPersonalUser);
  *       '404':
  *         description: User not found
  */
-router.patch("/me", users_controller_1.updatePersonalUser);
+router.patch("/me", authentication_1.authentication, users_controller_1.updatePersonalUser);
 /**
  * @swagger
  * /users/{userId}:
@@ -115,7 +116,7 @@ router.patch("/me", users_controller_1.updatePersonalUser);
  *       '404':
  *         description: User not found
  */
-router.get("/:userId", users_controller_1.getUserById);
+router.get("/:userId", authentication_1.authentication, users_controller_1.getUserById);
 /**
  * @swagger
  * /users/{userId}:
@@ -142,5 +143,5 @@ router.get("/:userId", users_controller_1.getUserById);
  *       '404':
  *         description: User not found
  */
-router.delete("/:userId", users_controller_1.deleteUserById);
+router.delete("/:userId", authentication_1.authentication, users_controller_1.deleteUserById);
 exports.default = router;

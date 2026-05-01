@@ -1,0 +1,62 @@
+============================================================
+       GUÍA DE DESPLIEGUE Y CONFIGURACIÓN - NEXUSFLOW
+============================================================
+
+1. CÓMO OBTENER LAS APIS (PASO A PASO)
+------------------------------------------------------------
+
+A. TELEGRAM:
+   1. Abre Telegram y busca a "@BotFather".
+   2. Envía "/newbot" y sigue las instrucciones (nombre y usuario).
+   3. Guarda el "API Token" que te entregará.
+
+B. DISCORD:
+   1. Ve a: https://discord.com/developers/applications
+   2. Crea "New Application".
+   3. Ve a la pestaña "Bot" y haz clic en "Reset Token" para copiarlo.
+   4. IMPORTANTE: En esa misma pestaña, busca "Privileged Gateway Intents" 
+      y ACTIVA "Message Content Intent". Si no lo haces, el bot no leerá mensajes.
+   5. En "OAuth2" -> "URL Generator", marca "bot" y "Administrator" para 
+      generar el link e invitar al bot a tu servidor.
+
+C. FACEBOOK MESSENGER:
+   1. Ve a: https://developers.facebook.com
+   2. Crea una App de tipo "Other" -> "Business".
+   3. Añade el producto "Messenger".
+   4. Genera un "Page Access Token" vinculando tu Fan Page.
+   5. Configura un "Verify Token" (cualquier palabra secreta que tú inventes).
+
+2. DESPLIEGUE EN RENDER.COM
+------------------------------------------------------------
+Render es ideal porque ofrece HTTPS gratuito y despliegue automático desde GitHub.
+
+PASOS PARA RENDER:
+1. Crea una cuenta en Render.com y conecta tu repositorio de GitHub.
+2. Crea un "Web Service".
+3. Build Command: "npm install && npm run build"
+4. Start Command: "npm start"
+5. VARIABLES DE ENTORNO (Environment Variables):
+   Añade todas las de tu archivo .env:
+   - TELEGRAM_TOKEN
+   - DISCORD_TOKEN
+   - FB_PAGE_TOKEN
+   - FB_VERIFY_TOKEN
+   - DEFAULT_ORG_ID
+   - GOOGLE_APPLICATION_CREDENTIALS: En Render, usa la opción "Secret Files" 
+     para subir tu archivo .json de Firebase y pon la ruta que Render te asigne.
+
+3. PRUEBAS LOCALES (NGROK)
+------------------------------------------------------------
+Antes de subir a Render, usa "ngrok" para probar los webhooks de Facebook:
+1. Descarga ngrok y ejecuta: "ngrok http 3000"
+2. Copia la URL HTTPS que te da (ej: https://abcd.ngrok-free.app)
+3. En el panel de Facebook Developers, pon esa URL en el Webhook:
+   URL: https://abcd.ngrok-free.app/webhooks/facebook
+
+4. ESTADO DEL CÓDIGO
+------------------------------------------------------------
+El código que he construido ya contempla:
+- Reconexión automática.
+- Filtros de seguridad para evitar bucles.
+- Integración directa con el esquema de base de datos de tu App Móvil.
+============================================================

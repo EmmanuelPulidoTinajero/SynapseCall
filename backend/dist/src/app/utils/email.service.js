@@ -9,14 +9,24 @@ const fs_1 = __importDefault(require("fs"));
 const path_1 = __importDefault(require("path"));
 const handlebars_1 = __importDefault(require("handlebars"));
 const transporter = nodemailer_1.default.createTransport({
-    service: 'gmail',
+    host: 'smtp.gmail.com',
+    port: 587, // Standard port for cloud apps
+    secure: false, // False for 587 (it upgrades to secure later)
     auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS,
     },
+    tls: {
+        ciphers: 'SSLv3',
+        rejectUnauthorized: false
+    },
+    family: 4, // Keep this to force IPv4
+    logger: true, // Keep logging enabled to see the handshake
+    debug: true
 });
 const compileTemplate = (templateName, data) => {
-    const filePath = path_1.default.join(process.cwd(), 'src', 'views', 'emails', `${templateName}.handlebars`);
+    const filePath = path_1.default.join(__dirname, '../../views/emails', `${templateName}.handlebars`);
+    console.log("Looking for template at:", filePath);
     const source = fs_1.default.readFileSync(filePath, 'utf-8');
     const template = handlebars_1.default.compile(source);
     return template(data);
