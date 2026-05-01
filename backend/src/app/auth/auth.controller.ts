@@ -237,7 +237,7 @@ export const logout = async (req: Request, res: Response) => {
     }
 
     res.clearCookie('refresh', { httpOnly: true, signed: true });
-    res.clearCookie('accessToken');
+    res.clearCookie('accessToken', { httpOnly: true });
 
     return res.status(200).json({ message: 'Logged out successfully' });
 }

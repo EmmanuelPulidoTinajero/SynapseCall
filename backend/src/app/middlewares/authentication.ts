@@ -19,7 +19,9 @@ export const authentication = async (req: Request, res: Response, next: NextFunc
             (req as any).user = verifiedToken;
             return next();
         }
-    } catch (error) {
+    } catch (error: any) {
+        console.log("=== ERROR DE JWT ===");
+        console.log(error.message);
         if (req.accepts('json')) {
             return res.status(401).json({ message: "Invalid token" });
         }

@@ -14,8 +14,8 @@ import { Server as SocketServer } from "socket.io";
 import { ExpressPeerServer } from "peer";
 import { renderLandingOrHome } from "./app/auth/auth.controller";
 import { tryAuthentication } from "./app/middlewares/authentication";
-import AgendaItem from "./app/meetings/agenda-item.model"; // Importar Modelo
-import Agenda from "./app/meetings/agenda.model";         // Importar Modelo
+import AgendaItem from "./app/meetings/agenda-item.model";
+import cors from "cors";
 
 const port = process.env.PORT || 3000;
 
@@ -27,6 +27,10 @@ app.use("/static", static_(path.join(__dirname, "..", "public")));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser(process.env.COOKIE_SECRET));
+app.use(cors({
+    origin: 'http://localhost:4200',
+    credentials: true
+}));
 
 app.get("/", tryAuthentication, renderLandingOrHome);
 

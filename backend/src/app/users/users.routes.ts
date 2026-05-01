@@ -1,10 +1,11 @@
-import { Router } from "express";
+import { Router, RequestHandler } from "express";
 import {
     getPersonalUser,
     updatePersonalUser,
     getUserById,
     deleteUserById
 } from "./users.controller"
+import { authentication } from "../middlewares/authentication";
 
 const router = Router();
 
@@ -63,7 +64,7 @@ const router = Router();
  *       '404':
  *         description: User not found
  */
-router.get("/me", getPersonalUser);
+router.get("/me", authentication, getPersonalUser as RequestHandler);
 
 /**
  * @swagger
@@ -94,7 +95,7 @@ router.get("/me", getPersonalUser);
  *       '404':
  *         description: User not found
  */
-router.patch("/me", updatePersonalUser);
+router.patch("/me", authentication, updatePersonalUser as RequestHandler);
 
 /**
  * @swagger
@@ -124,7 +125,7 @@ router.patch("/me", updatePersonalUser);
  *       '404':
  *         description: User not found
  */
-router.get("/:userId", getUserById);
+router.get("/:userId", authentication, getUserById);
 
 /**
  * @swagger
@@ -152,6 +153,6 @@ router.get("/:userId", getUserById);
  *       '404':
  *         description: User not found
  */
-router.delete("/:userId", deleteUserById);
+router.delete("/:userId", authentication, deleteUserById);
 
 export default router;
