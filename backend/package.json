@@ -49,6 +49,7 @@
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
     "express-handlebars": "^8.0.3",
+    "google-auth-library": "^10.6.2",
     "install": "^0.13.0",
     "jsonwebtoken": "^9.0.2",
     "mongodb": "^7.0.0",
@@ -97,5 +98,5 @@
   },
   "engines": {
     "node": ">=22.0.0"
-}
+  }
 }

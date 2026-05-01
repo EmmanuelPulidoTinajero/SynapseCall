@@ -5,10 +5,56 @@ import bcrypt from "bcrypt";
 import { IUser } from '../interfaces/user';
 import { v4 as uuidv4 } from 'uuid';
 import { sendVerificationEmail, sendPasswordResetEmail } from '../utils/email.service';
+import { OAuth2Client } from 'google-auth-library';
+
+const googleClientId = process.env.GOOGLE_CLIENT_ID;
+const googleOAuthClient = googleClientId ? new OAuth2Client(googleClientId) : null;
+
+type GoogleLoginBody = {
+    credential?: string;
+    googleId?: string;
+    email?: string;
+    name?: string;
+};
+
+const getGoogleIdentity = async (body: GoogleLoginBody) => {
+    if (body.credential) {
+        if (!googleOAuthClient || !googleClientId) {
+            throw new Error("GOOGLE_CLIENT_ID is required to verify Google logins");
+        }
+
+        const ticket = await googleOAuthClient.verifyIdToken({
+            idToken: body.credential,
+            audience: googleClientId,
+        });
+
+        const payload = ticket.getPayload();
+
+        if (!payload?.email || !payload.sub) {
+            throw new Error("Google token payload is incomplete");
+        }
+
+        return {
+            googleId: payload.sub,
+            email: payload.email,
+            name: payload.name || payload.email.split('@')[0],
+        };
+    }
+
+    if (body.googleId && body.email) {
+        return {
+            googleId: body.googleId,
+            email: body.email,
+            name: body.name || body.email.split('@')[0],
+        };
+    }
+
+    throw new Error("Google credential is required");
+};
 
 export const googleLogin = async (req: Request, res: Response) => {
     try {
-        const { googleId, email, name } = req.body;
+        const { googleId, email, name } = await getGoogleIdentity(req.body || {});
 
         if (!googleId || !email) {
             return res.status(400).json({ message: "googleId and email are required" });
@@ -25,19 +71,25 @@ export const googleLogin = async (req: Request, res: Response) => {
                     email,
                     name: name || email.split('@')[0],
                     isVerified: true,
+                    personalSubscription: {
+                        status: 'inactive',
+                        plan: 'free'
+                    }
                 });
                 user = newUser.toObject();
             }
         }
 
+        const userId = user._id.toString();
+
         const accessToken = jwt.sign(
-            { id: user._id, email: user.email, name: user.name },
+            { id: userId, email: user.email, name: user.name },
             process.env.ACCESS_TOKEN_SECRET as jwt.Secret,
             { expiresIn: '15m' }
         );
 
         const refreshToken = jwt.sign(
-            { id: user._id },
+            { id: userId },
             process.env.REFRESH_TOKEN_SECRET as jwt.Secret,
             { expiresIn: '7d' }
         );
@@ -58,9 +110,27 @@ export const googleLogin = async (req: Request, res: Response) => {
         return res.status(200).json({
             message: "Google login successful",
             accessToken,
-            user: { id: user._id, email: user.email, name: user.name }
+            user: { id: userId, email: user.email, name: user.name }
         });
     } catch (error) {
+        const message = error instanceof Error ? error.message : "Server error during Google login";
+
+        if (message === "Google credential is required") {
+            return res.status(400).json({ message });
+        }
+
+        if (message === "Google token payload is incomplete") {
+            return res.status(401).json({ message: "Invalid Google credential" });
+        }
+
+        if (message.includes("GOOGLE_CLIENT_ID")) {
+            return res.status(500).json({ message });
+        }
+
+        if (message.includes("Wrong number of parts") || message.includes("invalid") || message.includes("verify")) {
+            return res.status(401).json({ message: "Invalid Google credential" });
+        }
+
         console.error("Google login error:", error);
         return res.status(500).json({ message: "Server error during Google login" });
     }
@@ -325,7 +395,10 @@ export const renderLogin = (req: Request, res: Response) => {
 };
 
 export const renderSignup = (req: Request, res: Response) => {
-    res.render('signup');
+    res.render('signup', {
+        layout: 'main',
+        googleClientId: process.env.GOOGLE_CLIENT_ID
+    });
 };
 
 export const renderForgotPassword = (req: Request, res: Response) => {
