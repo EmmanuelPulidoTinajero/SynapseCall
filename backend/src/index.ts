@@ -58,9 +58,20 @@ dbConnect().then(() => {
     (global as any).io = io;
 
     io.on("connection", (socket: any) => {
-        socket.on("join-meeting", (meetingId: string, userId: string) => {
+        // WebRTC signaling relay
+        socket.on("offer", (data: { to: string; offer: RTCSessionDescriptionInit }) => {
+            socket.to(data.to).emit("offer", { from: socket.id, offer: data.offer });
+        });
+        socket.on("answer", (data: { to: string; answer: RTCSessionDescriptionInit }) => {
+            socket.to(data.to).emit("answer", { from: socket.id, answer: data.answer });
+        });
+        socket.on("ice-candidate", (data: { to: string; candidate: RTCIceCandidateInit }) => {
+            socket.to(data.to).emit("ice-candidate", { from: socket.id, candidate: data.candidate });
+        });
+
+        socket.on("join-meeting", (meetingId: string, _userId: string) => {
             socket.join(meetingId);
-            socket.broadcast.to(meetingId).emit("user-connected", userId);
+            socket.broadcast.to(meetingId).emit("user-connected", socket.id);
 
             // Chat
             socket.on("message", (data: { message: string, userName: string }) => {
@@ -135,7 +146,7 @@ dbConnect().then(() => {
             // --- FIN LÓGICA AGENDA ---
 
             socket.on("disconnect", () => {
-                socket.broadcast.to(meetingId).emit("user-disconnected", userId);
+                socket.broadcast.to(meetingId).emit("user-disconnected", socket.id);
             });
         });
     });

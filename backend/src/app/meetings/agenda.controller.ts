@@ -37,6 +37,9 @@ export const addAgendaItem = async (req: Request, res: Response) => {
             status: 'pending'
         });
 
+        const io = (global as any).io;
+        if (io) io.to(meetingId).emit("agenda-item-added", newItem);
+
         return res.status(201).json(newItem);
     } catch (error) {
         return res.status(500).json({ message: "Error al agregar tema" });
@@ -57,6 +60,16 @@ export const updateAgendaItem = async (req: Request, res: Response) => {
 export const deleteAgendaItem = async (req: Request, res: Response) => {
     try {
         const { itemId } = req.params;
+
+        const item = await AgendaItem.findById(itemId);
+        if (item) {
+            const agenda = await Agenda.findById(item.agenda_id);
+            const io = (global as any).io;
+            if (io && agenda) {
+                io.to(agenda.meeting_id.toString()).emit("agenda-item-deleted", itemId);
+            }
+        }
+
         await AgendaItem.findByIdAndDelete(itemId);
         return res.status(200).json({ message: "Tema eliminado" });
     } catch (error) {
