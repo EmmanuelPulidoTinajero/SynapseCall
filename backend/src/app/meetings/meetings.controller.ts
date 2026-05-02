@@ -1,9 +1,9 @@
 import { Request, Response } from 'express';
-import { Types } from 'mongoose'; 
+import { Types } from 'mongoose';
 import Meeting from './meetings.model';
 import { IMeeting } from '../interfaces/meeting';
-import User from '../users/users.model'; 
-import Organization from '../organizations/org.model'; 
+import User from '../users/users.model';
+import Organization from '../organizations/org.model';
 import { s3Storage } from '../middlewares/upload';
 import { getS3DownloadLink , listAllS3Keys} from '../utils/s3.utils';
 import axios from 'axios';
@@ -43,23 +43,23 @@ export const getMeetings = async (req: Request, res: Response) => {
 export const enterMeeting = async (req: Request, res: Response) => {
     try {
         const meetingId = req.params.id;
-        const currentUser = (req as any).user; 
+        const currentUser = (req as any).user;
         if (!meetingId || !Types.ObjectId.isValid(meetingId)) {
-            return res.status(404).send("<h1>Reunión no encontrada (ID inválido)</h1>");
+            return res.status(404).json({ message: "Reunión no encontrada (ID inválido)" });
         }
         const meeting = await Meeting.findById(meetingId);
         if (!meeting) {
-            return res.status(404).send("<h1>Reunión no encontrada</h1>");
+            return res.status(404).json({ message: "Reunión no encontrada" });
         }
 
         const hostUser = await User.findById(meeting.initiator_id).populate('organizationId');
-        
+
         let isPro = false;
         let orgData = null;
         if (hostUser) {
             const org = hostUser.organizationId as any;
             const isPersonalPro = hostUser.personalSubscription.status === 'active';
-            const isOrgPro = org && org.subscription.status === 'active';   
+            const isOrgPro = org && org.subscription.status === 'active';
             isPro = isPersonalPro || isOrgPro;
 
             if (isOrgPro && org) {
@@ -73,7 +73,7 @@ export const enterMeeting = async (req: Request, res: Response) => {
         const s3Bucket = s3Storage;
         let keys: string[] = [];
         let links: any[] = [];
-        
+
         try {
             if (process.env.S3_ACCESS_KEY) {
                 keys = await listAllS3Keys(meetingId);
@@ -85,32 +85,32 @@ export const enterMeeting = async (req: Request, res: Response) => {
 
         const iceServers = await getTwilioIceServers();
 
-        res.render("meeting", {                
-            layout: false, 
-            meetingId: meetingId,
-            meetingTitle: meeting.title,
-            isPro: isPro,
-            isHost: isHost,
-            orgName: orgData?.name,
-            orgLogo: orgData?.logo,
-            s3Bucket: s3Bucket,
-            downloadLinksJson: JSON.stringify(links),
-            iceServersJson: JSON.stringify(iceServers),
-            userName: userName
+        return res.status(200).json({
+            meeting: meeting,
+
+            config: {
+                isPro: isPro,
+                isHost: isHost,
+                orgName: orgData?.name,
+                orgLogo: orgData?.logo,
+                downloadLinks: links,
+                iceServers: iceServers,
+                userName: userName
+            }
         });
 
     } catch (error) {
         console.error("Error entering meeting:", error);
-        return res.status(500).send("<h1>Error del servidor al entrar a la reunión</h1>");
+        return res.status(500).json({ message: "Error del servidor al entrar a la reunión" });
     }
 };
 
 export const createMeeting = async (req: Request, res: Response) => {
     try {
         const newMeeting = req.body;
-        const userId = (req as any).user.id; 
+        const userId = (req as any).user.id;
 
-        
+
         if (!newMeeting || !newMeeting.title) {
             return res.status(400).send({ message: "El título de la reunión es obligatorio." });
         };
@@ -123,7 +123,7 @@ export const createMeeting = async (req: Request, res: Response) => {
         if (isNaN(startTime.getTime())) {
             return res.status(400).send({ message: 'Formato de fecha inválido.' });
         }
-        
+
         const end = newMeeting.endTime ? new Date(newMeeting.endTime) : undefined;
 
         const meeting: IMeeting = {
@@ -181,7 +181,7 @@ export const deleteMeeting = async (req: Request, res: Response) => {
     try {
         const meetingId = req.params.id;
         if (!meetingId) return res.status(400).send({ message: "Missing meeting id." });
-        
+
         const meeting = await Meeting.findById({ _id: meetingId });
         if (!meeting) return res.status(404).send({ message: "Meeting not found." });
 
