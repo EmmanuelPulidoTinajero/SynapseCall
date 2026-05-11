@@ -29,12 +29,14 @@ const getTwilioIceServers = async () => {
 
 export const getMeetings = async (req: Request, res: Response) => {
     try {
-        const meetings = await Meeting.find({});
-        if (meetings.length > 0) {
-            return res.status(200).send({ message: "Meetings found.", meetings });
-        } else {
-            return res.status(200).send({ message: "No meetings created yet." });
-        }
+        const userId = (req as any).user.id;
+
+        const meetings = await Meeting.find({ initiator_id: userId }).sort({ startTime: 1 });
+
+        return res.status(200).send({
+            message: meetings.length > 0 ? "Meetings found." : "No meetings created yet.",
+            meetings
+        });
     } catch (error) {
         return res.status(500).send({ message: "Server error" });
     }
