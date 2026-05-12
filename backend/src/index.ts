@@ -77,7 +77,9 @@ dbConnect().then(() => {
             socket.on("message", (data: { message: string, userName: string }) => {
                 const body = {
                     userName: data.userName,
-                    message: data.message
+                    message: data.message,
+                    sentAt: new Date().toISOString(),
+                    socketId: socket.id,
                 };
                 io.to(meetingId).emit("message", body);
             });
@@ -116,6 +118,10 @@ dbConnect().then(() => {
                     }
 
                     // Iniciar el siguiente
+                    if (!data.nextItemId) {
+                        io.to(meetingId).emit("agenda-finished");
+                        return;
+                    }
                     const now = new Date();
                     const nextItem = await AgendaItem.findByIdAndUpdate(data.nextItemId, {
                         status: 'active',
@@ -129,7 +135,6 @@ dbConnect().then(() => {
                             duration: nextItem.durationInMinutes
                         });
                     } else {
-                        // Fin de la agenda
                         io.to(meetingId).emit("agenda-finished");
                     }
                 } catch (e) {
