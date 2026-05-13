@@ -27,7 +27,13 @@ app.use("/static", static_(path.join(__dirname, "..", "public")));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser(process.env.COOKIE_SECRET));
-app.use(cors({origin: ["synapsecallcliente.vercel.app", "synapsecallcliente-synapse-call.vercel.app"]}));
+app.use(cors({
+    origin: [
+        "https://synapsecallcliente.vercel.app",
+        "https://synapsecallcliente-synapse-call.vercel.app"
+    ],
+    credentials: true
+}));
 
 app.get("/", tryAuthentication, renderLandingOrHome);
 
