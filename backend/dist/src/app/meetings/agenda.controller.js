@@ -36,6 +36,9 @@ const addAgendaItem = async (req, res) => {
             order,
             status: 'pending'
         });
+        const io = global.io;
+        if (io)
+            io.to(meetingId).emit("agenda-item-added", newItem);
         return res.status(201).json(newItem);
     }
     catch (error) {
@@ -58,6 +61,14 @@ exports.updateAgendaItem = updateAgendaItem;
 const deleteAgendaItem = async (req, res) => {
     try {
         const { itemId } = req.params;
+        const item = await agenda_item_model_1.default.findById(itemId);
+        if (item) {
+            const agenda = await agenda_model_1.default.findById(item.agenda_id);
+            const io = global.io;
+            if (io && agenda) {
+                io.to(agenda.meeting_id.toString()).emit("agenda-item-deleted", itemId);
+            }
+        }
         await agenda_item_model_1.default.findByIdAndDelete(itemId);
         return res.status(200).json({ message: "Tema eliminado" });
     }

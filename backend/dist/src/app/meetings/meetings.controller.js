@@ -29,13 +29,12 @@ const getTwilioIceServers = async () => {
 };
 const getMeetings = async (req, res) => {
     try {
-        const meetings = await meetings_model_1.default.find({});
-        if (meetings.length > 0) {
-            return res.status(200).send({ message: "Meetings found.", meetings });
-        }
-        else {
-            return res.status(200).send({ message: "No meetings created yet." });
-        }
+        const userId = req.user.id;
+        const meetings = await meetings_model_1.default.find({ initiator_id: userId }).sort({ startTime: 1 });
+        return res.status(200).send({
+            message: meetings.length > 0 ? "Meetings found." : "No meetings created yet.",
+            meetings
+        });
     }
     catch (error) {
         return res.status(500).send({ message: "Server error" });
@@ -47,11 +46,11 @@ const enterMeeting = async (req, res) => {
         const meetingId = req.params.id;
         const currentUser = req.user;
         if (!meetingId || !mongoose_1.Types.ObjectId.isValid(meetingId)) {
-            return res.status(404).send("<h1>Reunión no encontrada (ID inválido)</h1>");
+            return res.status(404).json({ message: "Reunión no encontrada (ID inválido)" });
         }
         const meeting = await meetings_model_1.default.findById(meetingId);
         if (!meeting) {
-            return res.status(404).send("<h1>Reunión no encontrada</h1>");
+            return res.status(404).json({ message: "Reunión no encontrada" });
         }
         const hostUser = await users_model_1.default.findById(meeting.initiator_id).populate('organizationId');
         let isPro = false;
@@ -80,23 +79,22 @@ const enterMeeting = async (req, res) => {
             console.warn("S3 no disponible, continuando sin archivos.");
         }
         const iceServers = await getTwilioIceServers();
-        res.render("meeting", {
-            layout: false,
-            meetingId: meetingId,
-            meetingTitle: meeting.title,
-            isPro: isPro,
-            isHost: isHost,
-            orgName: orgData?.name,
-            orgLogo: orgData?.logo,
-            s3Bucket: s3Bucket,
-            downloadLinksJson: JSON.stringify(links),
-            iceServersJson: JSON.stringify(iceServers),
-            userName: userName
+        return res.status(200).json({
+            meeting: meeting,
+            config: {
+                isPro: isPro,
+                isHost: isHost,
+                orgName: orgData?.name,
+                orgLogo: orgData?.logo,
+                downloadLinks: links,
+                iceServers: iceServers,
+                userName: userName
+            }
         });
     }
     catch (error) {
         console.error("Error entering meeting:", error);
-        return res.status(500).send("<h1>Error del servidor al entrar a la reunión</h1>");
+        return res.status(500).json({ message: "Error del servidor al entrar a la reunión" });
     }
 };
 exports.enterMeeting = enterMeeting;

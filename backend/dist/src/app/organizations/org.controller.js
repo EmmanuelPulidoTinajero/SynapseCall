@@ -126,7 +126,7 @@ const getOrgById = async (req, res) => {
         const org = await org_model_1.default.findById(orgId).populate('members', 'name email');
         if (!org)
             return res.status(404).json({ message: "Organización no encontrada" });
-        return res.status(200).json(org);
+        return res.status(200).json({ organization: org });
     }
     catch (e) {
         return res.status(500).json({ message: "Error del servidor" });

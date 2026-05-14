@@ -63,7 +63,10 @@ app.use(express_1.default.json());
 app.use(express_1.default.urlencoded({ extended: true }));
 app.use((0, cookie_parser_1.default)(process.env.COOKIE_SECRET));
 app.use((0, cors_1.default)({
-    origin: 'http://localhost:4200',
+    origin: [
+        "https://synapsecallcliente.vercel.app",
+        "https://synapsecallcliente-synapse-call.vercel.app"
+    ],
     credentials: true
 }));
 app.get("/", authentication_1.tryAuthentication, auth_controller_1.renderLandingOrHome);
@@ -87,14 +90,26 @@ app.use("/swagger", swagger_ui_express_1.serve, (0, swagger_ui_express_1.setup)(
     });
     global.io = io;
     io.on("connection", (socket) => {
-        socket.on("join-meeting", (meetingId, userId) => {
+        // WebRTC signaling relay
+        socket.on("offer", (data) => {
+            socket.to(data.to).emit("offer", { from: socket.id, offer: data.offer });
+        });
+        socket.on("answer", (data) => {
+            socket.to(data.to).emit("answer", { from: socket.id, answer: data.answer });
+        });
+        socket.on("ice-candidate", (data) => {
+            socket.to(data.to).emit("ice-candidate", { from: socket.id, candidate: data.candidate });
+        });
+        socket.on("join-meeting", (meetingId, _userId) => {
             socket.join(meetingId);
-            socket.broadcast.to(meetingId).emit("user-connected", userId);
+            socket.broadcast.to(meetingId).emit("user-connected", socket.id);
             // Chat
             socket.on("message", (data) => {
                 const body = {
                     userName: data.userName,
-                    message: data.message
+                    message: data.message,
+                    sentAt: new Date().toISOString(),
+                    socketId: socket.id,
                 };
                 io.to(meetingId).emit("message", body);
             });
@@ -129,6 +144,10 @@ app.use("/swagger", swagger_ui_express_1.serve, (0, swagger_ui_express_1.setup)(
                         await agenda_item_model_1.default.findByIdAndUpdate(data.currentItemId, { status: 'completed' });
                     }
                     // Iniciar el siguiente
+                    if (!data.nextItemId) {
+                        io.to(meetingId).emit("agenda-finished");
+                        return;
+                    }
                     const now = new Date();
                     const nextItem = await agenda_item_model_1.default.findByIdAndUpdate(data.nextItemId, {
                         status: 'active',
@@ -142,7 +161,6 @@ app.use("/swagger", swagger_ui_express_1.serve, (0, swagger_ui_express_1.setup)(
                         });
                     }
                     else {
-                        // Fin de la agenda
                         io.to(meetingId).emit("agenda-finished");
                     }
                 }
@@ -157,7 +175,7 @@ app.use("/swagger", swagger_ui_express_1.serve, (0, swagger_ui_express_1.setup)(
             });
             // --- FIN LÓGICA AGENDA ---
             socket.on("disconnect", () => {
-                socket.broadcast.to(meetingId).emit("user-disconnected", userId);
+                socket.broadcast.to(meetingId).emit("user-disconnected", socket.id);
             });
         });
     });
