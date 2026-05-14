@@ -26,11 +26,10 @@ export const s3Storage = multerS3({
     cb(null, {...file});
   },
   key: (req: Request, file ,cb) => {
-    const meetingId = req.params.id;
+    const prefix = req.params.id ?? 'orgs';
     const date = new Date().getTime().toString();
     const rawName = file.originalname.replace(/[^a-zA-Z0-9.()_-]/g, "_");
-    const name = `${meetingId}---${date}---${rawName}`;
-    cb(null, `${name}`);
+    cb(null, `${prefix}---${date}---${rawName}`);
   },
 });
 

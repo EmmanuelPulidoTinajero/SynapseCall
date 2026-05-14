@@ -30,7 +30,8 @@ app.use(cookieParser(process.env.COOKIE_SECRET));
 app.use(cors({
     origin: [
         "https://synapsecallcliente.vercel.app",
-        "https://synapsecallcliente-synapse-call.vercel.app"
+        "https://synapsecallcliente-synapse-call.vercel.app",
+        "http://localhost:4200"
     ],
     credentials: true
 }));

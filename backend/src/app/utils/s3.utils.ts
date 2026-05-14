@@ -30,6 +30,11 @@ export async function listAllS3Keys(prefix: string): Promise<string[]> {
       return allKeys;
     }
 
+export async function getS3ImageUrl(key: string): Promise<string> {
+  const command = new GetObjectCommand({ Bucket: "synapse-call", Key: key });
+  return getSignedUrl(s3Client, command, { expiresIn: 3600 });
+}
+
 export type S3Link = { key: string; url: string };
 
 export async function getS3DownloadLink(keys: string[]): Promise<S3Link[]> {

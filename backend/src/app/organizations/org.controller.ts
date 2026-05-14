@@ -4,7 +4,7 @@ import User from "../users/users.model";
 import { Types } from "mongoose";
 import paypal from "@paypal/checkout-server-sdk";
 import { AuthRequest } from "../interfaces/custom-request";
-import { Auth } from "mongodb";
+import { getS3ImageUrl } from "../utils/s3.utils";
 
 const environment = process.env.PAYPAL_ENVIRONMENT === "live"
     ? new paypal.core.LiveEnvironment(process.env.PAYPAL_CLIENT_ID!, process.env.PAYPAL_CLIENT_SECRET!)
@@ -32,19 +32,20 @@ export const createNewOrg = async (req: AuthRequest, res: Response) => {
             return res.status(400).json({ message: "Nombre y OrderID de pago requeridos." });
         }
 
-        const request = new paypal.orders.OrdersGetRequest(orderId);
-        const order = await client.execute(request);
+        if (process.env.SKIP_PAYPAL_VERIFICATION !== "true") {
+            const captureRequest = new paypal.orders.OrdersCaptureRequest(orderId);
+            const capture = await client.execute(captureRequest);
 
-        if (order.result.status !== "COMPLETED") {
-            return res.status(402).json({ message: "El pago no se ha completado." });
-        }
+            if (capture.result.status !== "COMPLETED") {
+                return res.status(402).json({ message: "El pago no se ha completado." });
+            }
 
-        const purchaseUnit = order.result.purchase_units[0];
-        const amount = purchaseUnit.amount.value;
-        const currency = purchaseUnit.amount.currency_code;
+            const purchaseUnit = capture.result.purchase_units[0];
+            const captureAmount = purchaseUnit.payments?.captures?.[0]?.amount;
 
-        if (amount !== "5.00" || currency !== "USD") {
-            return res.status(400).json({ message: "Monto de pago incorrecto." });
+            if (!captureAmount || captureAmount.value !== "5.00" || captureAmount.currency_code !== "USD") {
+                return res.status(400).json({ message: "Monto de pago incorrecto." });
+            }
         }
 
         const existingOrg = await Organization.findOne({ ownerId: userId });
@@ -54,7 +55,7 @@ export const createNewOrg = async (req: AuthRequest, res: Response) => {
 
         let logoUrl = "";
         if (file) {
-            logoUrl = file.location || file.key;
+            logoUrl = (file as any).key ?? '';
         }
 
         let newOrg = null;
@@ -140,6 +141,86 @@ export const addMemberToOrg = async (req: AuthRequest, res: Response) => {
     }
 }
 
+export const getMyOrg = async (req: AuthRequest, res: Response) => {
+    try {
+        const userId = req.user?.id;
+        const org = await Organization.findOne({
+            $or: [{ ownerId: userId }, { members: new Types.ObjectId(userId) }]
+        }).populate('members', 'name email');
+
+        if (!org) return res.status(404).json({ message: "No perteneces a ninguna organización." });
+
+        const orgObj = org.toObject() as any;
+        if (orgObj.logoUrl) {
+            orgObj.logoUrl = await getS3ImageUrl(orgObj.logoUrl);
+        }
+        orgObj.isOwner = org.ownerId.toString() === userId;
+        return res.status(200).json(orgObj);
+    } catch (e) {
+        return res.status(500).json({ message: "Error del servidor" });
+    }
+}
+
+export const joinOrg = async (req: AuthRequest, res: Response) => {
+    try {
+        const userId = req.user?.id;
+        const { orgId } = req.params;
+
+        const user = await User.findById(userId);
+        if (!user) return res.status(404).json({ message: "Usuario no encontrado." });
+
+        if (user.organizationId) {
+            return res.status(409).json({ message: "Ya perteneces a una organización." });
+        }
+
+        const org = await Organization.findById(orgId);
+        if (!org) return res.status(404).json({ message: "Organización no encontrada." });
+
+        if (org.members.length >= 10) {
+            return res.status(400).json({ message: "Límite de 10 miembros alcanzado." });
+        }
+
+        const alreadyMember = org.members.some(m => m.toString() === userId);
+        if (alreadyMember) {
+            return res.status(409).json({ message: "Ya eres miembro de esta organización." });
+        }
+
+        org.members.push(new Types.ObjectId(userId));
+        await org.save();
+
+        user.organizationId = org._id as Types.ObjectId;
+        await user.save();
+
+        const populated = await org.populate('members', 'name email');
+        return res.status(200).json({ message: "Te has unido a la organización.", organization: populated });
+    } catch (e) {
+        return res.status(500).json({ message: "Error del servidor" });
+    }
+}
+
+export const leaveOrg = async (req: AuthRequest, res: Response) => {
+    try {
+        const userId = req.user?.id;
+        const { orgId } = req.params;
+
+        const org = await Organization.findById(orgId);
+        if (!org) return res.status(404).json({ message: "Organización no encontrada." });
+
+        if (org.ownerId.toString() === userId) {
+            return res.status(403).json({ message: "El dueño no puede abandonar la organización. Elimínala en su lugar." });
+        }
+
+        org.members = org.members.filter(m => m.toString() !== userId);
+        await org.save();
+
+        await User.findByIdAndUpdate(userId, { $unset: { organizationId: "" } });
+
+        return res.status(200).json({ message: "Has abandonado la organización." });
+    } catch (e) {
+        return res.status(500).json({ message: "Error del servidor" });
+    }
+}
+
 export const getOrgById = async (req: Request, res: Response) => {
     try {
         const orgId = req.params.orgId;
@@ -147,7 +228,11 @@ export const getOrgById = async (req: Request, res: Response) => {
 
         if (!org) return res.status(404).json({ message: "Organización no encontrada" });
 
-        return res.status(200).json({ organization: org });
+        const orgObj = org.toObject() as any;
+        if (orgObj.logoUrl) {
+            orgObj.logoUrl = await getS3ImageUrl(orgObj.logoUrl);
+        }
+        return res.status(200).json(orgObj);
     } catch (e) {
         return res.status(500).json({ message: "Error del servidor" });
     }

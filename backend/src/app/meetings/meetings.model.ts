@@ -13,6 +13,7 @@ const meetingSchema = new Schema<IMeeting>({
   endTime: { type: Date },
   initiator_id: { type: String, required: true }, 
   isProMeeting: { type: Boolean, default: false },
+  isOrgOnly: { type: Boolean, default: false },
   meetingSettings: {
     muteOnEntry: { type: Boolean, default: false },
     allowRenaming: { type: Boolean, default: true },

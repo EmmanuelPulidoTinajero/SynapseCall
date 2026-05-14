@@ -31,7 +31,23 @@ export const getMeetings = async (req: Request, res: Response) => {
     try {
         const userId = (req as any).user.id;
 
-        const meetings = await Meeting.find({ initiator_id: userId }).sort({ startTime: 1 });
+        let query: any = { initiator_id: userId };
+
+        const user = await User.findById(userId).select('organizationId');
+        if (user?.organizationId) {
+            const org = await Organization.findById(user.organizationId).select('members');
+            if (org) {
+                const memberIds = org.members.map(m => m.toString());
+                query = {
+                    $or: [
+                        { initiator_id: userId },
+                        { isOrgOnly: true, initiator_id: { $in: memberIds } }
+                    ]
+                };
+            }
+        }
+
+        const meetings = await Meeting.find(query).sort({ startTime: 1 });
 
         return res.status(200).send({
             message: meetings.length > 0 ? "Meetings found." : "No meetings created yet.",
@@ -137,6 +153,7 @@ export const createMeeting = async (req: Request, res: Response) => {
             endTime: end as any,
             initiator_id: userId,
             isProMeeting: false,
+            isOrgOnly: newMeeting.isOrgOnly === true,
             meetingSettings: {
                 muteOnEntry: false,
                 allowRenaming: true,
@@ -168,7 +185,8 @@ export const updateMeeting = async (req: Request, res: Response) => {
             description: updateInfo.description,
             status: updateInfo.status,
             startTime: updateInfo.startTime,
-            endTime: updateInfo.endTime
+            endTime: updateInfo.endTime,
+            isOrgOnly: updateInfo.isOrgOnly === true
         };
 
         const updated = await Meeting.findByIdAndUpdate(meetingId, updatedMeeting, { new: true });

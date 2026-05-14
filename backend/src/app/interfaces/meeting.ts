@@ -5,8 +5,9 @@ export interface IMeeting {
     status: "scheduled" | "ongoing" | "ended";
     startTime: Date;
     endTime?: Date;
-    initiator_id: string; 
+    initiator_id: string;
     isProMeeting: boolean;
+    isOrgOnly: boolean;
     meetingSettings: {
         muteOnEntry: boolean;
         allowRenaming: boolean;
