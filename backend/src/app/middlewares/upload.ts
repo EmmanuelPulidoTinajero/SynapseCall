@@ -25,7 +25,6 @@ export const s3Storage = multerS3({
   metadata: (req, file, cb) => {
     cb(null, {...file});
   },
-  acl: "public-read", // Tal vez cambiar a authenticated-read, habrá que ver
   key: (req: Request, file ,cb) => {
     const meetingId = req.params.id;
     const date = new Date().getTime().toString();

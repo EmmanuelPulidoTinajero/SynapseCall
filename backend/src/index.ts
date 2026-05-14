@@ -28,7 +28,10 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser(process.env.COOKIE_SECRET));
 app.use(cors({
-    origin: 'http://localhost:4200',
+    origin: [
+        "https://synapsecallcliente.vercel.app",
+        "https://synapsecallcliente-synapse-call.vercel.app"
+    ],
     credentials: true
 }));
 
@@ -61,15 +64,28 @@ dbConnect().then(() => {
     (global as any).io = io;
 
     io.on("connection", (socket: any) => {
-        socket.on("join-meeting", (meetingId: string, userId: string) => {
+        // WebRTC signaling relay
+        socket.on("offer", (data: { to: string; offer: RTCSessionDescriptionInit }) => {
+            socket.to(data.to).emit("offer", { from: socket.id, offer: data.offer });
+        });
+        socket.on("answer", (data: { to: string; answer: RTCSessionDescriptionInit }) => {
+            socket.to(data.to).emit("answer", { from: socket.id, answer: data.answer });
+        });
+        socket.on("ice-candidate", (data: { to: string; candidate: RTCIceCandidateInit }) => {
+            socket.to(data.to).emit("ice-candidate", { from: socket.id, candidate: data.candidate });
+        });
+
+        socket.on("join-meeting", (meetingId: string, _userId: string) => {
             socket.join(meetingId);
-            socket.broadcast.to(meetingId).emit("user-connected", userId);
+            socket.broadcast.to(meetingId).emit("user-connected", socket.id);
 
             // Chat
             socket.on("message", (data: { message: string, userName: string }) => {
                 const body = {
                     userName: data.userName,
-                    message: data.message
+                    message: data.message,
+                    sentAt: new Date().toISOString(),
+                    socketId: socket.id,
                 };
                 io.to(meetingId).emit("message", body);
             });
@@ -108,6 +124,10 @@ dbConnect().then(() => {
                     }
 
                     // Iniciar el siguiente
+                    if (!data.nextItemId) {
+                        io.to(meetingId).emit("agenda-finished");
+                        return;
+                    }
                     const now = new Date();
                     const nextItem = await AgendaItem.findByIdAndUpdate(data.nextItemId, {
                         status: 'active',
@@ -121,7 +141,6 @@ dbConnect().then(() => {
                             duration: nextItem.durationInMinutes
                         });
                     } else {
-                        // Fin de la agenda
                         io.to(meetingId).emit("agenda-finished");
                     }
                 } catch (e) {
@@ -138,7 +157,7 @@ dbConnect().then(() => {
             // --- FIN LÓGICA AGENDA ---
 
             socket.on("disconnect", () => {
-                socket.broadcast.to(meetingId).emit("user-disconnected", userId);
+                socket.broadcast.to(meetingId).emit("user-disconnected", socket.id);
             });
         });
     });
